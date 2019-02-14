@@ -33,7 +33,6 @@ ExynosVirtualDisplayModule::ExynosVirtualDisplayModule(uint32_t __unused type, E
     mBaseWindowIndex = 0;
     mMaxWindowNum = 0;
     mUseDecon = false;
-    mDisplayFd = -1;
 }
 
 ExynosVirtualDisplayModule::~ExynosVirtualDisplayModule ()
