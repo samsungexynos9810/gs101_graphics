@@ -21,7 +21,7 @@
 
 class ExynosVirtualDisplayModule : public ExynosVirtualDisplay {
 public:
-    ExynosVirtualDisplayModule(uint32_t type, ExynosDevice *device);
+    ExynosVirtualDisplayModule(uint32_t displayId, ExynosDevice *device);
     ~ExynosVirtualDisplayModule();
 
     /* getDisplayAttribute(..., config, attribute, outValue)

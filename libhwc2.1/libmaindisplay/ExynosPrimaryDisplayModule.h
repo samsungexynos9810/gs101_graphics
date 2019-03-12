@@ -27,7 +27,7 @@ using namespace displaycolor;
 
 class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
     public:
-        ExynosPrimaryDisplayModule(uint32_t type, ExynosDevice *device);
+        ExynosPrimaryDisplayModule(uint32_t index, ExynosDevice *device);
         ~ExynosPrimaryDisplayModule();
         void usePreDefinedWindow(bool use);
         virtual int32_t validateWinConfigData();

@@ -18,12 +18,11 @@
 
 #include "ExynosVirtualDisplayModule.h"
 
-ExynosVirtualDisplayModule::ExynosVirtualDisplayModule(uint32_t __unused type, ExynosDevice *device)
-    :   ExynosVirtualDisplay(type, device)
+ExynosVirtualDisplayModule::ExynosVirtualDisplayModule(uint32_t index, ExynosDevice *device)
+    :   ExynosVirtualDisplay(index, device)
 {
     mGLESFormat = HAL_PIXEL_FORMAT_EXYNOS_YCbCr_420_SP_M;
 
-    mDisplayId = HWC_DISPLAY_VIRTUAL;
     mDisplayName = android::String8("VirtualDisplay");
 
     if (device == NULL) {
