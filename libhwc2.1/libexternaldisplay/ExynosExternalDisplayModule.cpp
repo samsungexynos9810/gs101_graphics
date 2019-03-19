@@ -58,29 +58,28 @@ ExynosMPP* ExynosExternalDisplayModule::getExynosMPPForDma(decon_idma_type idma)
 
 int32_t ExynosExternalDisplayModule::validateWinConfigData()
 {
-    struct decon_win_config *config = mWinConfigData->config;
     bool flagValidConfig = true;
 
     if (ExynosDisplay::validateWinConfigData() != NO_ERROR)
         flagValidConfig = false;
 
-    for (size_t i = 0; i < MAX_DECON_WIN; i++) {
-        if (config[i].state == config[i].DECON_WIN_STATE_BUFFER) {
+    for (size_t i = 0; i < mDpuData.configs.size(); i++) {
+        struct exynos_win_config_data &config = mDpuData.configs[i];
+        if (config.state == config.WIN_STATE_BUFFER) {
             bool configInvalid = false;
-            mpp_phycal_type_t mppType = getMPPTypeFromDPPChannel((uint32_t)config[i].idma_type);
-            if ((config[i].src.w != config[i].dst.w) ||
-                (config[i].src.h != config[i].dst.h)) {
+            uint32_t mppType = config.assignedMPP->mPhysicalType;
+            if ((config.src.w != config.dst.w) ||
+                (config.src.h != config.dst.h)) {
                 if ((mppType == MPP_DPP_GF) ||
                     (mppType == MPP_DPP_VG) ||
                     (mppType == MPP_DPP_VGF)) {
-                    DISPLAY_LOGE("WIN_CONFIG error: invalid assign id : %zu,  s_w : %d, d_w : %d, s_h : %d, d_h : %d, channel : %d, mppType : %d",
-                            i, config[i].src.w, config[i].dst.w, config[i].src.h, config[i].dst.h,
-                            config[i].idma_type, mppType);
+                    DISPLAY_LOGE("WIN_CONFIG error: invalid assign id : %zu,  s_w : %d, d_w : %d, s_h : %d, d_h : %d, mppType : %d",
+                            i, config.src.w, config.dst.w, config.src.h, config.dst.h, mppType);
                     configInvalid = true;
                 }
             }
             if (configInvalid) {
-                config[i].state = config[i].DECON_WIN_STATE_DISABLED;
+                config.state = config.WIN_STATE_DISABLED;
                 flagValidConfig = false;
             }
         }
