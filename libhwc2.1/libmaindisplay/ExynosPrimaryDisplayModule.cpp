@@ -59,30 +59,6 @@ void ExynosPrimaryDisplayModule::usePreDefinedWindow(bool use)
     }
 }
 
-decon_idma_type ExynosPrimaryDisplayModule::getDeconDMAType(ExynosMPP *otfMPP)
-{
-    return getDPPChannel(otfMPP);
-}
-
-ExynosMPP* ExynosPrimaryDisplayModule::getExynosMPPForDma(decon_idma_type channel)
-{
-    mpp_phycal_type_t mppType = getMPPTypeFromDPPChannel((uint32_t)channel);
-    switch (mppType) {
-        case MPP_DPP_GF:
-            return ExynosResourceManager::getExynosMPP(MPP_LOGICAL_DPP_GF);
-        case MPP_DPP_VG:
-            return ExynosResourceManager::getExynosMPP(MPP_LOGICAL_DPP_VG);
-        case MPP_DPP_VGS:
-            return ExynosResourceManager::getExynosMPP(MPP_LOGICAL_DPP_VGS);
-        case MPP_DPP_VGF:
-            return ExynosResourceManager::getExynosMPP(MPP_LOGICAL_DPP_VGF);
-        case MPP_DPP_VGRFS:
-            return ExynosResourceManager::getExynosMPP(MPP_LOGICAL_DPP_VGRFS);
-        default:
-            return NULL;
-    }
-}
-
 int32_t ExynosPrimaryDisplayModule::validateWinConfigData()
 {
     bool flagValidConfig = true;
@@ -127,17 +103,4 @@ void ExynosPrimaryDisplayModule::doPreProcessing() {
     } else {
         mDisplayControl.adjustDisplayFrame = false;
     }
-}
-
-decon_idma_type ExynosPrimaryDisplayModule::getDPPChannel(ExynosMPP *otfMPP) {
-    if (otfMPP == NULL)
-        return MAX_DECON_DMA_TYPE;
-
-    for (int i=0; i < MAX_DECON_DMA_TYPE; i++){
-        if((IDMA_CHANNEL_MAP[i].type == otfMPP->mPhysicalType) &&
-           (IDMA_CHANNEL_MAP[i].index == otfMPP->mPhysicalIndex))
-            return IDMA_CHANNEL_MAP[i].channel;
-    }
-
-    return MAX_DECON_DMA_TYPE;
 }

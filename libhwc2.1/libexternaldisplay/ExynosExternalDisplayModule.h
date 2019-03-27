@@ -23,8 +23,6 @@ class ExynosExternalDisplayModule : public ExynosExternalDisplay {
     public:
         ExynosExternalDisplayModule(uint32_t type, ExynosDevice *device);
         ~ExynosExternalDisplayModule();
-        virtual decon_idma_type getDeconDMAType(ExynosMPP *otfMPP);
-        virtual ExynosMPP* getExynosMPPForDma(decon_idma_type idma);
         virtual int32_t validateWinConfigData();
 };
 
