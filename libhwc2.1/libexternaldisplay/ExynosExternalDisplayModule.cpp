@@ -36,26 +36,6 @@ ExynosExternalDisplayModule::~ExynosExternalDisplayModule ()
 
 }
 
-decon_idma_type ExynosExternalDisplayModule::getDeconDMAType(ExynosMPP *otfMPP)
-{
-    ExynosDisplay *primary_display = mDevice->getDisplay(HWC_DISPLAY_PRIMARY);
-    if (primary_display == NULL) {
-        DISPLAY_LOGE("There is no primary display");
-        return MAX_DECON_DMA_TYPE;
-    }
-    return primary_display->getDeconDMAType(otfMPP);
-}
-
-ExynosMPP* ExynosExternalDisplayModule::getExynosMPPForDma(decon_idma_type idma)
-{
-    ExynosDisplay *primary_display = mDevice->getDisplay(HWC_DISPLAY_PRIMARY);
-    if (primary_display == NULL) {
-        DISPLAY_LOGE("There is no primary display");
-        return NULL;
-    }
-    return primary_display->getExynosMPPForDma(idma);
-}
-
 int32_t ExynosExternalDisplayModule::validateWinConfigData()
 {
     struct decon_win_config *config = mWinConfigData->config;

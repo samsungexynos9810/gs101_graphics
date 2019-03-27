@@ -19,18 +19,13 @@
 #include "ExynosDisplay.h"
 #include "ExynosPrimaryDisplay.h"
 
-mpp_phycal_type_t getMPPTypeFromDPPChannel(uint32_t channel);
 class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
     public:
         ExynosPrimaryDisplayModule(uint32_t type, ExynosDevice *device);
         ~ExynosPrimaryDisplayModule();
         void usePreDefinedWindow(bool use);
-        virtual decon_idma_type getDeconDMAType(ExynosMPP *otfMPP);
-        virtual ExynosMPP* getExynosMPPForDma(decon_idma_type idma);
         virtual int32_t validateWinConfigData();
         void doPreProcessing();
-    protected:
-        decon_idma_type getDPPChannel(ExynosMPP *otfMPP);
 };
 
 #endif
