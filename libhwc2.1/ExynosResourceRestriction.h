@@ -23,6 +23,32 @@
  * ****************************************************************/
 #define RESTRICTION_NONE 0
 
+#define USE_MODULE_ATTR
+
+/* Basic supported features */
+static feature_support_t feature_table[] =
+{
+    {MPP_DPP_GF,
+        MPP_ATTR_AFBC | MPP_ATTR_BLOCK_MODE | MPP_ATTR_WINDOW_UPDATE |
+        MPP_ATTR_FLIP_H | MPP_ATTR_FLIP_V |
+        MPP_ATTR_DIM |
+        MPP_ATTR_WCG | MPP_ATTR_HDR10
+    },
+
+    {MPP_DPP_VGRFS,
+        MPP_ATTR_AFBC | MPP_ATTR_BLOCK_MODE | MPP_ATTR_WINDOW_UPDATE | MPP_ATTR_SCALE |
+        MPP_ATTR_FLIP_H | MPP_ATTR_FLIP_V | MPP_ATTR_ROT_90 |
+        MPP_ATTR_DIM |
+        MPP_ATTR_WCG | MPP_ATTR_HDR10 | MPP_ATTR_HDR10PLUS
+    },
+
+    {MPP_G2D,
+        MPP_ATTR_AFBC | MPP_ATTR_SCALE |
+        MPP_ATTR_FLIP_H | MPP_ATTR_FLIP_V | MPP_ATTR_ROT_90 |
+        MPP_ATTR_WCG | MPP_ATTR_HDR10 | MPP_ATTR_HDR10PLUS | MPP_ATTR_USE_CAPA
+    }
+};
+
 /**************************************************************************************
  * HAL_PIXEL_FORMATs
 enum {
