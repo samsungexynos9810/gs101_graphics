@@ -39,6 +39,9 @@ uint32_t ExynosMPPModule::getSrcXOffsetAlign(struct exynos_image &src)
 bool ExynosMPPModule::isSupportedCompression(struct exynos_image &src)
 {
     if (src.compressed) {
+        /* [HACK] Decompression is not supported yet */
+        return false;
+#if 0
         if (mPhysicalType == MPP_G2D)
             return true;
 
@@ -101,6 +104,7 @@ bool ExynosMPPModule::isSupportedCompression(struct exynos_image &src)
             }
         }
         return false;
+#endif
     } else {
         return true;
     }
@@ -108,7 +112,6 @@ bool ExynosMPPModule::isSupportedCompression(struct exynos_image &src)
 
 bool ExynosMPPModule::isSupportedTransform(struct exynos_image &src)
 {
-    ExynosMPP *sharedMPP = NULL;
     switch (mPhysicalType)
     {
     case MPP_G2D:
@@ -132,6 +135,8 @@ bool ExynosMPPModule::isSupportedTransform(struct exynos_image &src)
             /* HACK */
             if ((src.transform != 0) && isFormat10BitYUV420(src.format)) return false;
 
+#if 0
+            ExynosMPP *sharedMPP = NULL;
             /* GF0 shares memory with VGRFS0 */
             sharedMPP = mResourceManager->getExynosMPP(MPP_DPP_GF, 1);
             if (sharedMPP == NULL) {
@@ -155,7 +160,8 @@ bool ExynosMPPModule::isSupportedTransform(struct exynos_image &src)
                 }
                 if (checkImg.compressed == 1)
                     return false;
-                }
+            }
+#endif
             return true;
         }
         /* RGB case */
