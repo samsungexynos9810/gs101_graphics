@@ -36,16 +36,6 @@ uint32_t ExynosMPPModule::getSrcXOffsetAlign(struct exynos_image &src)
     return mSrcSizeRestrictions[idx].cropXAlign;
 }
 
-uint32_t ExynosMPPModule::getDstWidthAlign(struct exynos_image &dst)
-{
-    if (((dst.format == HAL_PIXEL_FORMAT_EXYNOS_YCbCr_420_SPN_S10B) ||
-         (dst.format == HAL_PIXEL_FORMAT_EXYNOS_YCbCr_420_SP_M_S10B)) &&
-        (mPhysicalType == MPP_MSC))
-        return 4;
-
-    return  ExynosMPP::getDstWidthAlign(dst);
-}
-
 bool ExynosMPPModule::isSupportedCompression(struct exynos_image &src)
 {
     if (src.compressed) {
@@ -121,7 +111,6 @@ bool ExynosMPPModule::isSupportedTransform(struct exynos_image &src)
     ExynosMPP *sharedMPP = NULL;
     switch (mPhysicalType)
     {
-    case MPP_MSC:
     case MPP_G2D:
         return true;
     case MPP_DPP_G:

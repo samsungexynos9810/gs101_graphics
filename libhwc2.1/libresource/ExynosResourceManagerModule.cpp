@@ -62,3 +62,10 @@ ExynosResourceManagerModule::ExynosResourceManagerModule(ExynosDevice* device)
 ExynosResourceManagerModule::~ExynosResourceManagerModule()
 {
 }
+
+#ifdef DISABLE_READ_RESTRICTIONS
+bool ExynosResourceManagerModule::makeDPURestrictions(int fd)
+{
+    return false;
+}
+#endif

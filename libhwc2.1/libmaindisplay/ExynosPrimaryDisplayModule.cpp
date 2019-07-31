@@ -17,6 +17,10 @@
 #include "ExynosPrimaryDisplayModule.h"
 #include "ExynosHWCDebug.h"
 
+#ifdef FORCE_GPU_COMPOSITION
+extern exynos_hwc_control exynosHWCControl;
+#endif
+
 mpp_phycal_type_t getMPPTypeFromDPPChannel(uint32_t channel) {
 
     for (int i=0; i < MAX_DECON_DMA_TYPE; i++){
@@ -30,6 +34,9 @@ mpp_phycal_type_t getMPPTypeFromDPPChannel(uint32_t channel) {
 ExynosPrimaryDisplayModule::ExynosPrimaryDisplayModule(uint32_t __unused type, ExynosDevice *device)
     :    ExynosPrimaryDisplay(HWC_DISPLAY_PRIMARY, device)
 {
+#ifdef FORCE_GPU_COMPOSITION
+    exynosHWCControl.forceGpu = true;
+#endif
 }
 
 ExynosPrimaryDisplayModule::~ExynosPrimaryDisplayModule () {
@@ -37,6 +44,12 @@ ExynosPrimaryDisplayModule::~ExynosPrimaryDisplayModule () {
 
 void ExynosPrimaryDisplayModule::usePreDefinedWindow(bool use)
 {
+#ifdef FIX_BASE_WINDOW_INDEX
+    /* Use fixed base window index */
+    mBaseWindowIndex = FIX_BASE_WINDOW_INDEX;
+    return;
+#endif
+
     if (use) {
         mBaseWindowIndex = PRIMARY_DISP_BASE_WIN[mDevice->mDisplayMode];
         mMaxWindowNum = NUM_HW_WINDOWS - PRIMARY_DISP_BASE_WIN[mDevice->mDisplayMode];
