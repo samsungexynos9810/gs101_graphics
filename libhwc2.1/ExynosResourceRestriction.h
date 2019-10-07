@@ -271,6 +271,9 @@ static ppc_table ppc_table_map = {
 
     {PPC_IDX(MPP_G2D,PPC_FORMAT_RGB32,PPC_ROT_NO), {3.1, 2.2, 3.6, 5.1, 7.0, 2.2, 3.4}},
     {PPC_IDX(MPP_G2D,PPC_FORMAT_RGB32,PPC_ROT), {2.7, 2.0, 3.0, 5.2, 6.5, 2.0, 3.3}},
+
+    {PPC_IDX(MPP_G2D,PPC_FORMAT_AFBC,PPC_ROT_NO), {3.0, 1.6, 1.6, 2.4, 3.2, 1.6, 2.8}},
+    {PPC_IDX(MPP_G2D,PPC_FORMAT_AFBC,PPC_ROT), {3.0, 1.6, 1.6, 2.4, 3.2, 1.6, 2.8}},
 };
 
 #endif
