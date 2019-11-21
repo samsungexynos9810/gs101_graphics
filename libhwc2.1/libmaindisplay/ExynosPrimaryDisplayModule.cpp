@@ -52,62 +52,37 @@ void ExynosPrimaryDisplayModule::usePreDefinedWindow(bool use)
 
     if (use) {
         mBaseWindowIndex = PRIMARY_DISP_BASE_WIN[mDevice->mDisplayMode];
-        mMaxWindowNum = NUM_HW_WINDOWS - PRIMARY_DISP_BASE_WIN[mDevice->mDisplayMode];
+        mMaxWindowNum = mDisplayInterface->getMaxWindowNum() - PRIMARY_DISP_BASE_WIN[mDevice->mDisplayMode];
     } else {
         mBaseWindowIndex = 0;
-        mMaxWindowNum = NUM_HW_WINDOWS;
-    }
-}
-
-decon_idma_type ExynosPrimaryDisplayModule::getDeconDMAType(ExynosMPP *otfMPP)
-{
-    return getDPPChannel(otfMPP);
-}
-
-ExynosMPP* ExynosPrimaryDisplayModule::getExynosMPPForDma(decon_idma_type channel)
-{
-    mpp_phycal_type_t mppType = getMPPTypeFromDPPChannel((uint32_t)channel);
-    switch (mppType) {
-        case MPP_DPP_GF:
-            return ExynosResourceManager::getExynosMPP(MPP_LOGICAL_DPP_GF);
-        case MPP_DPP_VG:
-            return ExynosResourceManager::getExynosMPP(MPP_LOGICAL_DPP_VG);
-        case MPP_DPP_VGS:
-            return ExynosResourceManager::getExynosMPP(MPP_LOGICAL_DPP_VGS);
-        case MPP_DPP_VGF:
-            return ExynosResourceManager::getExynosMPP(MPP_LOGICAL_DPP_VGF);
-        case MPP_DPP_VGRFS:
-            return ExynosResourceManager::getExynosMPP(MPP_LOGICAL_DPP_VGRFS);
-        default:
-            return NULL;
+        mMaxWindowNum = mDisplayInterface->getMaxWindowNum();
     }
 }
 
 int32_t ExynosPrimaryDisplayModule::validateWinConfigData()
 {
-    struct decon_win_config *config = mWinConfigData->config;
     bool flagValidConfig = true;
 
     if (ExynosDisplay::validateWinConfigData() != NO_ERROR)
         flagValidConfig = false;
 
-    for (size_t i = 0; i < MAX_DECON_WIN; i++) {
-        if (config[i].state == config[i].DECON_WIN_STATE_BUFFER) {
+    for (size_t i = 0; i < mDpuData.configs.size(); i++) {
+        struct exynos_win_config_data &config = mDpuData.configs[i];
+        if (config.state == config.WIN_STATE_BUFFER) {
             bool configInvalid = false;
-            mpp_phycal_type_t mppType = getMPPTypeFromDPPChannel((uint32_t)config[i].idma_type);
-            if ((config[i].src.w != config[i].dst.w) ||
-                (config[i].src.h != config[i].dst.h)) {
+            uint32_t mppType = config.assignedMPP->mPhysicalType;
+            if ((config.src.w != config.dst.w) ||
+                (config.src.h != config.dst.h)) {
                 if ((mppType == MPP_DPP_GF) ||
                     (mppType == MPP_DPP_VG) ||
                     (mppType == MPP_DPP_VGF)) {
-                    DISPLAY_LOGE("WIN_CONFIG error: invalid assign id : %zu,  s_w : %d, d_w : %d, s_h : %d, d_h : %d, channel : %d, mppType : %d",
-                            i, config[i].src.w, config[i].dst.w, config[i].src.h, config[i].dst.h,
-                            config[i].idma_type, mppType);
+                    DISPLAY_LOGE("WIN_CONFIG error: invalid assign id : %zu,  s_w : %d, d_w : %d, s_h : %d, d_h : %d, mppType : %d",
+                            i, config.src.w, config.dst.w, config.src.h, config.dst.h, mppType);
                     configInvalid = true;
                 }
             }
             if (configInvalid) {
-                config[i].state = config[i].DECON_WIN_STATE_DISABLED;
+                config.state = config.WIN_STATE_DISABLED;
                 flagValidConfig = false;
             }
         }
@@ -128,17 +103,4 @@ void ExynosPrimaryDisplayModule::doPreProcessing() {
     } else {
         mDisplayControl.adjustDisplayFrame = false;
     }
-}
-
-decon_idma_type ExynosPrimaryDisplayModule::getDPPChannel(ExynosMPP *otfMPP) {
-    if (otfMPP == NULL)
-        return MAX_DECON_DMA_TYPE;
-
-    for (int i=0; i < MAX_DECON_DMA_TYPE; i++){
-        if((IDMA_CHANNEL_MAP[i].type == otfMPP->mPhysicalType) &&
-           (IDMA_CHANNEL_MAP[i].index == otfMPP->mPhysicalIndex))
-            return IDMA_CHANNEL_MAP[i].channel;
-    }
-
-    return MAX_DECON_DMA_TYPE;
 }
