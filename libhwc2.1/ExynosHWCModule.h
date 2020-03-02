@@ -21,11 +21,7 @@
 #include "DeconHeader.h"
 
 /* TODO: Those definitions should be removed */
-#define USE_SW_VSYNC
 #define DISABLE_M2M_MPPS
-#define FORCE_GPU_COMPOSITION
-#define FIX_BASE_WINDOW_INDEX     5
-#define DISABLE_READ_RESTRICTIONS
 
 #define HWC_VERSION     HWC_DEVICE_API_VERSION_1_5
 
