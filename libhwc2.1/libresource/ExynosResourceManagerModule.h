@@ -22,9 +22,6 @@ class ExynosResourceManagerModule : public ExynosResourceManager {
     public:
         ExynosResourceManagerModule(ExynosDevice* device);
         ~ExynosResourceManagerModule();
-#ifdef DISABLE_READ_RESTRICTIONS
-        virtual bool makeDPURestrictions(int fd);
-#endif
 };
 
 #endif // _EXYNOS_RESOURCE_MANAGER_MODULE_H
