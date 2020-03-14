@@ -25,8 +25,6 @@ class ExynosMPPModule : public ExynosMPP {
         ExynosMPPModule(ExynosResourceManager* resourceManager, uint32_t physicalType, uint32_t logicalType, const char *name,
             uint32_t physicalIndex, uint32_t logicalIndex, uint32_t preAssignInfo);
         ~ExynosMPPModule();
-        virtual bool isSupportedTransform(struct exynos_image &src);
-        virtual bool isSupportedCompression(struct exynos_image &src);
         virtual uint32_t getSrcXOffsetAlign(struct exynos_image &src);
         virtual uint32_t getSrcMaxCropSize(struct exynos_image &src);
     public:
