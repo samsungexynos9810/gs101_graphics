@@ -23,8 +23,6 @@
 /* TODO: Those definitions should be removed */
 #define DISABLE_M2M_MPPS
 
-#define HWC_VERSION     HWC_DEVICE_API_VERSION_1_5
-
 #define VSYNC_DEV_PREFIX "/sys/devices/"
 #define VSYNC_DEV_MIDDLE "platform/"
 #ifdef USE_SW_VSYNC
