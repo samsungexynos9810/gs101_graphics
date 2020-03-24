@@ -183,11 +183,3 @@ bool ExynosMPPModule::isSupportedTransform(struct exynos_image &src)
     }
 }
 
-uint32_t ExynosMPPModule::getSrcMaxCropSize(struct exynos_image &src)
-{
-    if ((mPhysicalType == MPP_DPP_VGRFS) &&
-        (src.transform & HAL_TRANSFORM_ROT_90))
-        return MAX_DPP_ROT_SRC_SIZE;
-    else
-        return ExynosMPP::getSrcMaxCropSize(src);
-}

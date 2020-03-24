@@ -29,7 +29,6 @@ class ExynosMPPModule : public ExynosMPP {
         virtual bool isSupportedCompression(struct exynos_image &src);
         virtual uint32_t getSrcXOffsetAlign(struct exynos_image &src);
         virtual uint32_t getDstWidthAlign(struct exynos_image &dst);
-        virtual uint32_t getSrcMaxCropSize(struct exynos_image &src);
     public:
         uint32_t mChipId;
 };
