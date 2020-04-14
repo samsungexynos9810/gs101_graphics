@@ -18,11 +18,50 @@
 #define EXYNOS_DISPLAY_DRM_INTERFACE_MODULE_H
 
 #include "ExynosDisplayDrmInterface.h"
+#include "DeconDrmHeader.h"
+#include <displaycolor/displaycolor_gs101.h>
+
+using namespace displaycolor;
 
 class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
     public:
         ExynosDisplayDrmInterfaceModule(ExynosDisplay *exynosDisplay);
         virtual ~ExynosDisplayDrmInterfaceModule();
+
+        virtual int32_t setDisplayColorSetting(
+                ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq);
+        virtual int32_t setPlaneColorSetting(
+                ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq,
+                const std::unique_ptr<DrmPlane> &plane,
+                const exynos_win_config_data &config);
+        void setColorSettingChanged(bool changed) {
+            mColorSettingChanged = changed; };
+        void destroyOldBlobs(std::vector<uint32_t> &oldBlobs);
+
+        int32_t createCgcBlobFromIDqe(const IDisplayColorGS101::IDqe &dqe,
+                uint32_t &blobId);
+        int32_t createDegammaLutBlobFromIDqe(const IDisplayColorGS101::IDqe &dqe,
+                uint32_t &blobId);
+        int32_t createRegammaLutBlobFromIDqe(const IDisplayColorGS101::IDqe &dqe,
+                uint32_t &blobId);
+        int32_t createGammaMatBlobFromIDqe(const IDisplayColorGS101::IDqe &dqe,
+                uint32_t &blobId);
+        int32_t createLinearMatBlobFromIDqe(const IDisplayColorGS101::IDqe &dqe,
+                uint32_t &blobId);
+
+        int32_t createEotfBlobFromIDpp(const IDisplayColorGS101::IDpp &dpp,
+                uint32_t &blobId);
+        int32_t createGmBlobFromIDpp(const IDisplayColorGS101::IDpp &dpp,
+                uint32_t &blobId);
+        int32_t createDtmBlobFromIDpp(const IDisplayColorGS101::IDpp &dpp,
+                uint32_t &blobId);
+        int32_t createOetfBlobFromIDpp(const IDisplayColorGS101::IDpp &dpp,
+                uint32_t &blobId);
+
+        std::vector<uint32_t> mOldBlobsForDisplayColor;
+        std::vector<uint32_t> mOldBlobsForPlaneColor;
+    private:
+        bool mColorSettingChanged = false;
 };
 
 class ExynosPrimaryDisplayDrmInterfaceModule : public ExynosDisplayDrmInterfaceModule {
