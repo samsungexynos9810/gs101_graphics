@@ -16,6 +16,7 @@
 
 #include "ExynosPrimaryDisplayModule.h"
 #include "ExynosHWCDebug.h"
+#include "ExynosDisplayDrmInterfaceModule.h"
 
 #ifdef FORCE_GPU_COMPOSITION
 extern exynos_hwc_control exynosHWCControl;
@@ -37,6 +38,8 @@ ExynosPrimaryDisplayModule::ExynosPrimaryDisplayModule(uint32_t __unused type, E
 #ifdef FORCE_GPU_COMPOSITION
     exynosHWCControl.forceGpu = true;
 #endif
+
+    mDisplayColorInterface = IDisplayColorGS101::Create();
 }
 
 ExynosPrimaryDisplayModule::~ExynosPrimaryDisplayModule () {
@@ -76,7 +79,8 @@ int32_t ExynosPrimaryDisplayModule::validateWinConfigData()
                 if ((mppType == MPP_DPP_GF) ||
                     (mppType == MPP_DPP_VG) ||
                     (mppType == MPP_DPP_VGF)) {
-                    DISPLAY_LOGE("WIN_CONFIG error: invalid assign id : %zu,  s_w : %d, d_w : %d, s_h : %d, d_h : %d, mppType : %d",
+                    DISPLAY_LOGE("WIN_CONFIG error: invalid assign id : "
+                            "%zu,  s_w : %d, d_w : %d, s_h : %d, d_h : %d, mppType : %d",
                             i, config.src.w, config.dst.w, config.src.h, config.dst.h, mppType);
                     configInvalid = true;
                 }
@@ -102,5 +106,430 @@ void ExynosPrimaryDisplayModule::doPreProcessing() {
         mDisplayControl.adjustDisplayFrame = true;
     } else {
         mDisplayControl.adjustDisplayFrame = false;
+    }
+}
+
+int32_t ExynosPrimaryDisplayModule::getColorModes(
+        uint32_t* outNumModes, int32_t* outModes)
+{
+    const ColorModesMap colorModeMap =
+        mDisplayColorInterface->ColorModesAndRenderIntents();
+    ALOGD("%s: size(%zu)", __func__, colorModeMap.size());
+    if (outModes == nullptr) {
+        *outNumModes = colorModeMap.size();
+        return HWC2_ERROR_NONE;
+    }
+    if (*outNumModes != colorModeMap.size()) {
+        DISPLAY_LOGE("%s: Invalid color mode size(%d), It should be(%zu)",
+                __func__, *outNumModes, colorModeMap.size());
+        return HWC2_ERROR_BAD_PARAMETER;
+    }
+
+    uint32_t index = 0;
+    for (const auto &it : colorModeMap)
+    {
+        outModes[index] = static_cast<int32_t>(it.first);
+        ALOGD("\tmode[%d] %d", index, outModes[index]);
+        index++;
+    }
+
+    return HWC2_ERROR_NONE;
+}
+
+int32_t ExynosPrimaryDisplayModule::setColorMode(int32_t mode)
+{
+    ALOGD("%s: mode(%d)", __func__, mode);
+    const ColorModesMap colorModeMap =
+        mDisplayColorInterface->ColorModesAndRenderIntents();
+    hwc::ColorMode colorMode =
+        static_cast<hwc::ColorMode>(mode);
+    const auto it = colorModeMap.find(colorMode);
+    if (it == colorModeMap.end()) {
+        DISPLAY_LOGE("%s: Invalid color mode(%d)", __func__, mode);
+        return HWC2_ERROR_BAD_PARAMETER;
+    }
+    mDisplaySceneInfo.setColorMode(colorMode);
+
+    return HWC2_ERROR_NONE;
+}
+
+int32_t ExynosPrimaryDisplayModule::getRenderIntents(int32_t mode,
+        uint32_t* outNumIntents, int32_t* outIntents)
+{
+    const ColorModesMap colorModeMap =
+        mDisplayColorInterface->ColorModesAndRenderIntents();
+    ALOGD("%s, size(%zu)", __func__, colorModeMap.size());
+    hwc::ColorMode colorMode =
+        static_cast<hwc::ColorMode>(mode);
+    const auto it = colorModeMap.find(colorMode);
+    if (it == colorModeMap.end()) {
+        DISPLAY_LOGE("%s: Invalid color mode(%d)", __func__, mode);
+        return HWC2_ERROR_BAD_PARAMETER;
+    }
+    auto &renderIntents = it->second;
+    if (outIntents == NULL) {
+        *outNumIntents = renderIntents.size();
+        ALOGD("\tintent num(%zu)", renderIntents.size());
+        return HWC2_ERROR_NONE;
+    }
+    if (*outNumIntents != renderIntents.size()) {
+        DISPLAY_LOGE("%s: Invalid intent size(%d), It should be(%zu)",
+                __func__, *outNumIntents, renderIntents.size());
+        return HWC2_ERROR_BAD_PARAMETER;
+    }
+
+    for (uint32_t i = 0; i < renderIntents.size(); i++)
+    {
+        outIntents[i] = static_cast<uint32_t>(renderIntents[i]);
+        ALOGD("\tintent[%d] %d", i, outIntents[i]);
+    }
+
+    return HWC2_ERROR_NONE;
+}
+
+int32_t ExynosPrimaryDisplayModule::setColorModeWithRenderIntent(int32_t mode,
+        int32_t intent)
+{
+    ALOGD("%s: mode(%d), intent(%d)", __func__, mode, intent);
+    const ColorModesMap colorModeMap =
+        mDisplayColorInterface->ColorModesAndRenderIntents();
+    hwc::ColorMode colorMode =
+        static_cast<hwc::ColorMode>(mode);
+    hwc::RenderIntent renderIntent =
+        static_cast<hwc::RenderIntent>(intent);
+
+    const auto mode_it = colorModeMap.find(colorMode);
+    if (mode_it == colorModeMap.end()) {
+        DISPLAY_LOGE("%s: Invalid color mode(%d)", __func__, mode);
+        return HWC2_ERROR_BAD_PARAMETER;
+    }
+
+    auto &renderIntents = mode_it->second;
+    auto intent_it = std::find(renderIntents.begin(),
+            renderIntents.end(), renderIntent);
+    if (intent_it == renderIntents.end()) {
+        DISPLAY_LOGE("%s: Invalid render intent(%d)", __func__, intent);
+        return HWC2_ERROR_BAD_PARAMETER;
+    }
+
+    mDisplaySceneInfo.setColorMode(colorMode);
+    mDisplaySceneInfo.setRenderIntent(renderIntent);
+
+    return HWC2_ERROR_NONE;
+}
+
+int32_t ExynosPrimaryDisplayModule::setLayersColorData()
+{
+    int32_t ret = 0;
+    uint32_t layerNum = 0;
+    for (uint32_t i = 0; i < mLayers.size(); i++)
+    {
+        ExynosLayer* layer = mLayers[i];
+
+        if (layer->mValidateCompositionType == HWC2_COMPOSITION_CLIENT)
+            continue;
+
+        LayerColorData& layerColorData =
+            mDisplaySceneInfo.getLayerColorDataInstance(layerNum);
+
+        /* set layer data mapping info */
+        if ((ret = mDisplaySceneInfo.setLayerDataMappingInfo(layer, layerNum))
+                != NO_ERROR) {
+            DISPLAY_LOGE("%s: layer[%d] setLayerDataMappingInfo fail, layerNum(%d)",
+                    __func__, i, layerNum);
+            return ret;
+        }
+
+        if ((ret = mDisplaySceneInfo.setLayerColorData(layerColorData, layer))
+                != NO_ERROR) {
+            DISPLAY_LOGE("%s: layer[%d] setLayerColorData fail, layerNum(%d)",
+                    __func__, i, layerNum);
+            return ret;
+        }
+
+        layerNum++;
+    }
+
+    /* Resize layer_data when layers were destroyed */
+    if (layerNum < mDisplaySceneInfo.displayScene.layer_data.size())
+        mDisplaySceneInfo.displayScene.layer_data.resize(layerNum);
+
+    return NO_ERROR;
+}
+
+bool ExynosPrimaryDisplayModule::hasDppForLayer(ExynosLayer* layer)
+{
+    if (mDisplaySceneInfo.layerDataMappingInfo.count(layer) == 0)
+        return false;
+
+    uint32_t index =  mDisplaySceneInfo.layerDataMappingInfo[layer];
+    if (index >= mDisplayColorInterface->Dpp().size()) {
+        DISPLAY_LOGE("%s: invalid dpp index(%d) dpp size(%zu)",
+                __func__, index, mDisplayColorInterface->Dpp().size());
+        return false;
+    }
+
+    return true;
+}
+
+const IDisplayColorGS101::IDpp& ExynosPrimaryDisplayModule::getDppForLayer(ExynosLayer* layer)
+{
+    uint32_t index = mDisplaySceneInfo.layerDataMappingInfo[layer];
+    return mDisplayColorInterface->Dpp()[index].get();
+}
+
+int ExynosPrimaryDisplayModule::deliverWinConfigData()
+{
+    int ret = 0;
+    ExynosDisplayDrmInterfaceModule *moduleDisplayInterface =
+        (ExynosDisplayDrmInterfaceModule*)(mDisplayInterface.get());
+
+    moduleDisplayInterface->setColorSettingChanged(
+            mDisplaySceneInfo.needDisplayColorSetting());
+
+    ret = ExynosDisplay::deliverWinConfigData();
+
+    /* clear flag and layer mapping info */
+    mDisplaySceneInfo.reset();
+    return ret;
+}
+
+LayerColorData& ExynosPrimaryDisplayModule::DisplaySceneInfo::getLayerColorDataInstance(
+        uint32_t index)
+{
+    size_t currentSize = displayScene.layer_data.size();
+    if (index >= currentSize) {
+        displayScene.layer_data.resize(currentSize+1);
+        colorSettingChanged = true;
+    }
+    return displayScene.layer_data[index];
+}
+
+int32_t ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerDataMappingInfo(
+        ExynosLayer* layer, uint32_t index)
+{
+    if (layerDataMappingInfo.count(layer) != 0) {
+        ALOGE("layer mapping is already inserted (layer: %p, index:%d)",
+                layer, index);
+        return -EINVAL;
+    }
+    layerDataMappingInfo.insert(std::make_pair(layer, index));
+
+    return NO_ERROR;
+}
+
+void ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerDataspace(
+        LayerColorData& layerColorData,
+        hwc::Dataspace dataspace)
+{
+    if (layerColorData.dataspace != dataspace) {
+        colorSettingChanged = true;
+        layerColorData.dataspace = dataspace;
+    }
+}
+
+void ExynosPrimaryDisplayModule::DisplaySceneInfo::disableLayerHdrStaticMetadata(
+        LayerColorData& layerColorData)
+{
+    if (layerColorData.static_metadata.is_valid) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.is_valid = false;
+    }
+}
+
+void ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerHdrStaticMetadata(
+        LayerColorData& layerColorData,
+        const ExynosHdrStaticInfo &exynosHdrStaticInfo)
+{
+    if (layerColorData.static_metadata.is_valid == false) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.is_valid = true;
+    }
+
+    if (layerColorData.static_metadata.display_red_primary_x !=
+            exynosHdrStaticInfo.sType1.mR.x) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.display_red_primary_x =
+            exynosHdrStaticInfo.sType1.mR.x;
+    }
+    if (layerColorData.static_metadata.display_red_primary_y !=
+            exynosHdrStaticInfo.sType1.mR.y) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.display_red_primary_y =
+            exynosHdrStaticInfo.sType1.mR.y;
+    }
+    if (layerColorData.static_metadata.display_green_primary_x !=
+            exynosHdrStaticInfo.sType1.mG.x) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.display_green_primary_x =
+            exynosHdrStaticInfo.sType1.mG.x;
+    }
+    if (layerColorData.static_metadata.display_green_primary_y !=
+            exynosHdrStaticInfo.sType1.mG.y) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.display_green_primary_y =
+            exynosHdrStaticInfo.sType1.mG.y;
+    }
+    if (layerColorData.static_metadata.display_blue_primary_x !=
+            exynosHdrStaticInfo.sType1.mB.x) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.display_blue_primary_x =
+            exynosHdrStaticInfo.sType1.mB.x;
+    }
+    if (layerColorData.static_metadata.display_blue_primary_y !=
+            exynosHdrStaticInfo.sType1.mB.y) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.display_blue_primary_y =
+            exynosHdrStaticInfo.sType1.mB.y;
+    }
+    if (layerColorData.static_metadata.white_point_x !=
+            exynosHdrStaticInfo.sType1.mW.x) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.white_point_x =
+            exynosHdrStaticInfo.sType1.mW.x;
+    }
+    if (layerColorData.static_metadata.white_point_y !=
+            exynosHdrStaticInfo.sType1.mW.y) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.white_point_y =
+            exynosHdrStaticInfo.sType1.mW.y;
+    }
+    if (layerColorData.static_metadata.max_luminance !=
+            exynosHdrStaticInfo.sType1.mMaxDisplayLuminance) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.max_luminance =
+            exynosHdrStaticInfo.sType1.mMaxDisplayLuminance;
+    }
+    if (layerColorData.static_metadata.min_luminance !=
+            exynosHdrStaticInfo.sType1.mMinDisplayLuminance) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.min_luminance =
+            exynosHdrStaticInfo.sType1.mMinDisplayLuminance;
+    }
+    if (layerColorData.static_metadata.max_content_light_level !=
+            exynosHdrStaticInfo.sType1.mMaxContentLightLevel) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.max_content_light_level =
+            exynosHdrStaticInfo.sType1.mMaxContentLightLevel;
+    }
+    if (layerColorData.static_metadata.max_frame_average_light_level !=
+            exynosHdrStaticInfo.sType1.mMaxFrameAverageLightLevel) {
+        colorSettingChanged = true;
+        layerColorData.static_metadata.max_frame_average_light_level =
+            exynosHdrStaticInfo.sType1.mMaxFrameAverageLightLevel;
+    }
+}
+
+int32_t ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerColorData(
+        LayerColorData& layerData, ExynosLayer* layer)
+{
+    setLayerDataspace(layerData,
+            static_cast<hwc::Dataspace>(layer->mDataSpace));
+    if (layer->mIsHdrLayer) {
+        if (layer->getMetaParcel() == nullptr) {
+            HDEBUGLOGE("%s:: meta data parcel is null", __func__);
+            return -EINVAL;
+        }
+        setLayerHdrStaticMetadata(layerData, layer->getMetaParcel()->sHdrStaticInfo);
+    } else {
+        disableLayerHdrStaticMetadata(layerData);
+    }
+
+    return NO_ERROR;
+}
+
+int32_t ExynosPrimaryDisplayModule::updateColorConversionInfo()
+{
+    int ret = 0;
+    if ((ret = setLayersColorData()) != NO_ERROR)
+        return ret;
+    if (hwcCheckDebugMessages(eDebugColorManagement))
+        mDisplaySceneInfo.printDisplayScene();
+
+    if (mDisplaySceneInfo.colorSettingChanged) {
+        if ((ret = mDisplayColorInterface->Update(mDisplaySceneInfo.displayScene)) != 0) {
+            DISPLAY_LOGE("Display Scene update error (%d)", ret);
+            return ret;
+        }
+    }
+
+    return ret;
+}
+
+bool ExynosPrimaryDisplayModule::DisplaySceneInfo::needDisplayColorSetting()
+{
+    /* TODO: Check if we can skip color setting */
+    /* For now, propage setting every frame */
+    return true;
+
+    if (colorSettingChanged)
+        return true;
+    if (prev_layerDataMappingInfo != layerDataMappingInfo)
+        return true;
+
+    return false;
+}
+
+void ExynosPrimaryDisplayModule::DisplaySceneInfo::printDisplayScene()
+{
+    ALOGD("======================= DisplayScene info ========================");
+    ALOGD("dpu_bit_depth: %d", static_cast<uint32_t>(displayScene.dpu_bit_depth));
+    ALOGD("color_mode: %d", static_cast<uint32_t>(displayScene.color_mode));
+    ALOGD("render_intent: %d", static_cast<uint32_t>(displayScene.render_intent));
+    ALOGD("matrix");
+    for (uint32_t i = 0; i < 16; (i += 4)) {
+        ALOGD("%f, %f, %f, %f",
+                displayScene.matrix[i], displayScene.matrix[i+1],
+                displayScene.matrix[i+2], displayScene.matrix[i+3]);
+    }
+    ALOGD("layer: %zu ++++++",
+            displayScene.layer_data.size());
+    for (uint32_t i = 0; i < displayScene.layer_data.size(); i++) {
+        ALOGD("layer[%d] info", i);
+        printLayerColorData(displayScene.layer_data[i]);
+    }
+
+    ALOGD("layerDataMappingInfo: %zu ++++++",
+            layerDataMappingInfo.size());
+    for (auto layer : layerDataMappingInfo) {
+        ALOGD("[layer: %p] %d", layer.first, layer.second);
+    }
+}
+
+void ExynosPrimaryDisplayModule::DisplaySceneInfo::printLayerColorData(
+    const LayerColorData& layerData)
+{
+    ALOGD("dataspace: 0x%8x", static_cast<uint32_t>(layerData.dataspace));
+    ALOGD("matrix");
+    for (uint32_t i = 0; i < 16; (i += 4)) {
+        ALOGD("%f, %f, %f, %f",
+                layerData.matrix[i], layerData.matrix[i+1],
+                layerData.matrix[i+2], layerData.matrix[i+3]);
+    }
+    ALOGD("static_metadata.is_valid(%d)", layerData.static_metadata.is_valid);
+    if (layerData.static_metadata.is_valid) {
+        ALOGD("\tdisplay_red_primary(%d, %d)",
+                layerData.static_metadata.display_red_primary_x,
+                layerData.static_metadata.display_red_primary_y);
+        ALOGD("\tdisplay_green_primary(%d, %d)",
+                layerData.static_metadata.display_green_primary_x,
+                layerData.static_metadata.display_green_primary_y);
+        ALOGD("\tdisplay_blue_primary(%d, %d)",
+                layerData.static_metadata.display_blue_primary_x,
+                layerData.static_metadata.display_blue_primary_y);
+        ALOGD("\twhite_point(%d, %d)",
+                layerData.static_metadata.white_point_x,
+                layerData.static_metadata.white_point_y);
+    }
+    ALOGD("dynamic_metadata.is_valid(%d)", layerData.dynamic_metadata.is_valid);
+    if (layerData.dynamic_metadata.is_valid) {
+        ALOGD("\tdisplay_maximum_luminance: %d",
+                layerData.dynamic_metadata.display_maximum_luminance);
+        ALOGD("\tmaxscl(%d, %d, %d)", layerData.dynamic_metadata.maxscl[0],
+                layerData.dynamic_metadata.maxscl[1],
+                layerData.dynamic_metadata.maxscl[2]);
+        ALOGD("\ttm_flag(%d)", layerData.dynamic_metadata.tm_flag);
+        ALOGD("\ttm_knee_x(%d)", layerData.dynamic_metadata.tm_knee_x);
+        ALOGD("\ttm_knee_y(%d)", layerData.dynamic_metadata.tm_knee_y);
     }
 }

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+LOCAL_SHARED_LIBRARIES += libdisplaycolor
+
 LOCAL_SRC_FILES += \
 	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libdevice/ExynosDeviceModule.cpp \
 	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libmaindisplay/ExynosPrimaryDisplayModule.cpp \
