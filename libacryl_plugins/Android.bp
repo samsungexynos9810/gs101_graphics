@@ -1,0 +1,8 @@
+cc_library {
+    name: "libacryl_hdr_plugin",
+    proprietary: true,
+    srcs: ["libacryl_hdr_plugin.cpp"],
+    shared_libs: ["liblog", "libdisplaycolor", "android.hardware.graphics.common@1.2"],
+    header_libs: ["google_libacryl_hdrplugin_headers", "libsystem_headers"],
+    cflags: ["-Werror"],
+}

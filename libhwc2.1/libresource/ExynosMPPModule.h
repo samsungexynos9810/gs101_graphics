@@ -26,6 +26,7 @@ class ExynosMPPModule : public ExynosMPP {
             uint32_t physicalIndex, uint32_t logicalIndex, uint32_t preAssignInfo);
         ~ExynosMPPModule();
         virtual uint32_t getSrcXOffsetAlign(struct exynos_image &src);
+        virtual int32_t setColorConversionInfo();
     public:
         uint32_t mChipId;
 };

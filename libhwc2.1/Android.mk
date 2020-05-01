@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+LOCAL_SHARED_LIBRARIES += libdisplaycolor
+
 LOCAL_SRC_FILES += \
 	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libdevice/ExynosDeviceModule.cpp \
 	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libmaindisplay/ExynosPrimaryDisplayModule.cpp \
 	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libresource/ExynosMPPModule.cpp \
 	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libresource/ExynosResourceManagerModule.cpp	\
 	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libexternaldisplay/ExynosExternalDisplayModule.cpp \
-	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libvirtualdisplay/ExynosVirtualDisplayModule.cpp
+	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libvirtualdisplay/ExynosVirtualDisplayModule.cpp \
+	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libdisplayinterface/ExynosDisplayDrmInterfaceModule.cpp
