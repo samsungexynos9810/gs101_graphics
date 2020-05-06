@@ -218,6 +218,23 @@ int32_t ExynosPrimaryDisplayModule::setColorModeWithRenderIntent(int32_t mode,
     return HWC2_ERROR_NONE;
 }
 
+int32_t ExynosPrimaryDisplayModule::setColorTransform(
+        const float* matrix, int32_t hint)
+{
+    if ((hint < HAL_COLOR_TRANSFORM_IDENTITY) ||
+        (hint > HAL_COLOR_TRANSFORM_CORRECT_TRITANOPIA))
+        return HWC2_ERROR_BAD_PARAMETER;
+    ALOGI("%s:: %d, %d", __func__, mColorTransformHint, hint);
+    if (mColorTransformHint != hint)
+        setGeometryChanged(GEOMETRY_DISPLAY_COLOR_TRANSFORM_CHANGED);
+    mColorTransformHint = hint;
+#ifdef HWC_SUPPORT_COLOR_TRANSFORM
+    mDisplaySceneInfo.setColorTransform(matrix);
+#endif
+    return HWC2_ERROR_NONE;
+
+}
+
 int32_t ExynosPrimaryDisplayModule::setLayersColorData()
 {
     int32_t ret = 0;
