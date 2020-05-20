@@ -16,6 +16,7 @@
  *  limitations under the License.
  */
 #include <cassert>
+#include <array>
 
 #include <displaycolor/displaycolor_gs101.h>
 
@@ -92,36 +93,33 @@ class G2DHdrCommandWriter: public IG2DHdr10CommandWriter {
 
 public:
     struct CommandList {
+        std::array<g2d_reg, NUM_HDR_COEFFICIENTS> commands;     // (294 * 4 + 1) * 8 bytes
+        std::array<g2d_reg, NUM_HDR_MODE_REGS> layer_hdr_modes; // 4 * 8 bytes
         g2d_commandlist cmdlist{};
 
         CommandList() {
-            cmdlist.commands = new g2d_reg[NUM_HDR_COEFFICIENTS + NUM_HDR_MODE_REGS]; // (294 * 4 + 1) * 8 + 4 * 8 bytes
-            if (cmdlist.commands)
-                cmdlist.layer_hdr_mode = cmdlist.commands + NUM_HDR_COEFFICIENTS;
+            cmdlist.commands = commands.data();
+            cmdlist.layer_hdr_mode = layer_hdr_modes.data();
         }
 
-        ~CommandList() {
-            delete [] cmdlist.commands;
-        }
+        ~CommandList() { }
 
         void reset() {
             cmdlist.command_count = 0;
             cmdlist.layer_count = 0;
         }
 
-        g2d_commandlist *get() {
-            return cmdlist.commands ? &cmdlist : nullptr;
-        }
+        g2d_commandlist *get() { return &cmdlist; }
 
         uint32_t set_and_get_next_offset(uint32_t offset, uint32_t value) {
-            cmdlist.commands[cmdlist.command_count].offset = offset;
-            cmdlist.commands[cmdlist.command_count].value = value;
+            commands[cmdlist.command_count].offset = offset;
+            commands[cmdlist.command_count].value = value;
             cmdlist.command_count++;
             return offset + sizeof(value);
         }
 
         void updateLayer(std::size_t layer, bool alpha_premultiplied, uint32_t modectl) {
-            auto &hdr_mode = cmdlist.layer_hdr_mode[cmdlist.layer_count++];
+            auto &hdr_mode = layer_hdr_modes[cmdlist.layer_count++];
 
             hdr_mode.offset = G2D_LAYER_HDRMODE(layer);
             hdr_mode.value = layer;
@@ -236,12 +234,5 @@ public:
 };
 
 IG2DHdr10CommandWriter *IG2DHdr10CommandWriter::createInstance() {
-    auto *p = new G2DHdrCommandWriter();
-
-    if (!p || !p->mCmdList.get()) {
-        delete p;
-        return nullptr;
-    }
-
-    return p;
+    return new G2DHdrCommandWriter();
 }
