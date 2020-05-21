@@ -28,6 +28,7 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
         ExynosDisplayDrmInterfaceModule(ExynosDisplay *exynosDisplay);
         virtual ~ExynosDisplayDrmInterfaceModule();
 
+        virtual int32_t deliverWinConfigData();
         virtual int32_t setDisplayColorSetting(
                 ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq);
         virtual int32_t setPlaneColorSetting(
