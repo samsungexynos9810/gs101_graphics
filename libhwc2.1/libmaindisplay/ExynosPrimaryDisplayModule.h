@@ -82,6 +82,8 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                 void disableLayerHdrStaticMetadata(LayerColorData& layerColorData);
                 void setLayerHdrStaticMetadata(LayerColorData& layerColorData,
                         const ExynosHdrStaticInfo& exynosHdrStaticInfo);
+                void setLayerColorTransform(LayerColorData& layerColorData,
+                        std::array<float, TRANSFORM_MAT_SIZE> &matrix);
                 int32_t setLayerColorData(LayerColorData& layerData,
                         ExynosLayer* layer);
                 bool needDisplayColorSetting();
