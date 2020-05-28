@@ -69,6 +69,18 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                     }
                 };
 
+                template <typename T, typename M>
+                void updateInfoVectorVal(std::vector<T> &dst, M *src, uint32_t size) {
+                    if ((dst.size() != size) ||
+                        !std::equal(dst.begin(), dst.end(), src)) {
+                        colorSettingChanged = true;
+                        dst.resize(size);
+                        for (uint32_t i = 0; i < size; i++) {
+                            dst[i] = src[i];
+                        }
+                    }
+                };
+
                 void setColorMode(hwc::ColorMode mode) {
                     updateInfoSingleVal(displayScene.color_mode, mode);
                 };
@@ -86,6 +98,9 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                         const ExynosHdrStaticInfo& exynosHdrStaticInfo);
                 void setLayerColorTransform(LayerColorData& layerColorData,
                         std::array<float, TRANSFORM_MAT_SIZE> &matrix);
+                void disableLayerHdrDynamicMetadata(LayerColorData& layerColorData);
+                void setLayerHdrDynamicMetadata(LayerColorData& layerColorData,
+                        const ExynosHdrDynamicInfo& exynosHdrDynamicInfo);
                 int32_t setLayerColorData(LayerColorData& layerData,
                         ExynosLayer* layer);
                 bool needDisplayColorSetting();
