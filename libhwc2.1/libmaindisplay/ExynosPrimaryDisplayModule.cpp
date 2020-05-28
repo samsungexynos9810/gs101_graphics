@@ -346,88 +346,38 @@ void ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerHdrStaticMetadata(
         layerColorData.static_metadata.is_valid = true;
     }
 
-    if (layerColorData.static_metadata.display_red_primary_x !=
-            exynosHdrStaticInfo.sType1.mR.x) {
-        colorSettingChanged = true;
-        layerColorData.static_metadata.display_red_primary_x =
-            exynosHdrStaticInfo.sType1.mR.x;
-    }
-    if (layerColorData.static_metadata.display_red_primary_y !=
-            exynosHdrStaticInfo.sType1.mR.y) {
-        colorSettingChanged = true;
-        layerColorData.static_metadata.display_red_primary_y =
-            exynosHdrStaticInfo.sType1.mR.y;
-    }
-    if (layerColorData.static_metadata.display_green_primary_x !=
-            exynosHdrStaticInfo.sType1.mG.x) {
-        colorSettingChanged = true;
-        layerColorData.static_metadata.display_green_primary_x =
-            exynosHdrStaticInfo.sType1.mG.x;
-    }
-    if (layerColorData.static_metadata.display_green_primary_y !=
-            exynosHdrStaticInfo.sType1.mG.y) {
-        colorSettingChanged = true;
-        layerColorData.static_metadata.display_green_primary_y =
-            exynosHdrStaticInfo.sType1.mG.y;
-    }
-    if (layerColorData.static_metadata.display_blue_primary_x !=
-            exynosHdrStaticInfo.sType1.mB.x) {
-        colorSettingChanged = true;
-        layerColorData.static_metadata.display_blue_primary_x =
-            exynosHdrStaticInfo.sType1.mB.x;
-    }
-    if (layerColorData.static_metadata.display_blue_primary_y !=
-            exynosHdrStaticInfo.sType1.mB.y) {
-        colorSettingChanged = true;
-        layerColorData.static_metadata.display_blue_primary_y =
-            exynosHdrStaticInfo.sType1.mB.y;
-    }
-    if (layerColorData.static_metadata.white_point_x !=
-            exynosHdrStaticInfo.sType1.mW.x) {
-        colorSettingChanged = true;
-        layerColorData.static_metadata.white_point_x =
-            exynosHdrStaticInfo.sType1.mW.x;
-    }
-    if (layerColorData.static_metadata.white_point_y !=
-            exynosHdrStaticInfo.sType1.mW.y) {
-        colorSettingChanged = true;
-        layerColorData.static_metadata.white_point_y =
-            exynosHdrStaticInfo.sType1.mW.y;
-    }
-    if (layerColorData.static_metadata.max_luminance !=
-            exynosHdrStaticInfo.sType1.mMaxDisplayLuminance) {
-        colorSettingChanged = true;
-        layerColorData.static_metadata.max_luminance =
-            exynosHdrStaticInfo.sType1.mMaxDisplayLuminance;
-    }
-    if (layerColorData.static_metadata.min_luminance !=
-            exynosHdrStaticInfo.sType1.mMinDisplayLuminance) {
-        colorSettingChanged = true;
-        layerColorData.static_metadata.min_luminance =
-            exynosHdrStaticInfo.sType1.mMinDisplayLuminance;
-    }
-    if (layerColorData.static_metadata.max_content_light_level !=
-            exynosHdrStaticInfo.sType1.mMaxContentLightLevel) {
-        colorSettingChanged = true;
-        layerColorData.static_metadata.max_content_light_level =
-            exynosHdrStaticInfo.sType1.mMaxContentLightLevel;
-    }
-    if (layerColorData.static_metadata.max_frame_average_light_level !=
-            exynosHdrStaticInfo.sType1.mMaxFrameAverageLightLevel) {
-        colorSettingChanged = true;
-        layerColorData.static_metadata.max_frame_average_light_level =
-            exynosHdrStaticInfo.sType1.mMaxFrameAverageLightLevel;
-    }
+    updateInfoSingleVal(layerColorData.static_metadata.display_red_primary_x,
+            exynosHdrStaticInfo.sType1.mR.x);
+    updateInfoSingleVal(layerColorData.static_metadata.display_red_primary_y,
+            exynosHdrStaticInfo.sType1.mR.y);
+    updateInfoSingleVal(layerColorData.static_metadata.display_green_primary_x,
+            exynosHdrStaticInfo.sType1.mG.x);
+    updateInfoSingleVal(layerColorData.static_metadata.display_green_primary_y,
+            exynosHdrStaticInfo.sType1.mG.y);
+    updateInfoSingleVal(layerColorData.static_metadata.display_blue_primary_x,
+            exynosHdrStaticInfo.sType1.mB.x);
+    updateInfoSingleVal(layerColorData.static_metadata.display_blue_primary_y,
+            exynosHdrStaticInfo.sType1.mB.y);
+    updateInfoSingleVal(layerColorData.static_metadata.white_point_x,
+            exynosHdrStaticInfo.sType1.mW.x);
+    updateInfoSingleVal(layerColorData.static_metadata.white_point_y,
+            exynosHdrStaticInfo.sType1.mW.y);
+    updateInfoSingleVal(layerColorData.static_metadata.max_luminance,
+            exynosHdrStaticInfo.sType1.mMaxDisplayLuminance);
+    updateInfoSingleVal(layerColorData.static_metadata.min_luminance,
+            exynosHdrStaticInfo.sType1.mMinDisplayLuminance);
+    updateInfoSingleVal(layerColorData.static_metadata.max_content_light_level,
+            exynosHdrStaticInfo.sType1.mMaxContentLightLevel);
+    updateInfoSingleVal(
+            layerColorData.static_metadata.max_frame_average_light_level,
+            exynosHdrStaticInfo.sType1.mMaxFrameAverageLightLevel);
 }
 
 void ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerColorTransform(
         LayerColorData& layerColorData,
         std::array<float, TRANSFORM_MAT_SIZE> &matrix)
 {
-    if (layerColorData.matrix != matrix) {
-        colorSettingChanged = true;
-        layerColorData.matrix = matrix;
-    }
+    updateInfoSingleVal(layerColorData.matrix, matrix);
 }
 
 int32_t ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerColorData(

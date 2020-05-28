@@ -61,18 +61,20 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                     layerDataMappingInfo.clear();
                 };
 
-                void setColorMode(hwc::ColorMode mode) {
-                    if (displayScene.color_mode != mode) {
+                template <typename T, typename M>
+                void updateInfoSingleVal(T &dst, M &src) {
+                    if (src != dst) {
                         colorSettingChanged = true;
-                        displayScene.color_mode = mode;
+                        dst = src;
                     }
                 };
 
+                void setColorMode(hwc::ColorMode mode) {
+                    updateInfoSingleVal(displayScene.color_mode, mode);
+                };
+
                 void setRenderIntent(hwc::RenderIntent intent) {
-                    if (displayScene.render_intent != intent) {
-                        displayScene.render_intent = intent;
-                        colorSettingChanged = true;
-                    }
+                    updateInfoSingleVal(displayScene.render_intent, intent);
                 };
 
                 LayerColorData& getLayerColorDataInstance(uint32_t index);
