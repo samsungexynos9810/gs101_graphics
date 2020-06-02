@@ -511,11 +511,9 @@ int32_t ExynosPrimaryDisplayModule::updateColorConversionInfo()
     if (hwcCheckDebugMessages(eDebugColorManagement))
         mDisplaySceneInfo.printDisplayScene();
 
-    if (mDisplaySceneInfo.colorSettingChanged) {
-        if ((ret = mDisplayColorInterface->Update(mDisplaySceneInfo.displayScene)) != 0) {
-            DISPLAY_LOGE("Display Scene update error (%d)", ret);
-            return ret;
-        }
+    if ((ret = mDisplayColorInterface->Update(mDisplaySceneInfo.displayScene)) != 0) {
+        DISPLAY_LOGE("Display Scene update error (%d)", ret);
+        return ret;
     }
 
     return ret;
