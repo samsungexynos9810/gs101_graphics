@@ -40,6 +40,7 @@ ExynosPrimaryDisplayModule::ExynosPrimaryDisplayModule(uint32_t __unused type, E
 #endif
 
     mDisplayColorInterface = mDisplayColorLoader.GetDisplayColorGS101();
+    mDisplaySceneInfo.displayScene.dpu_bit_depth = BitDepth::kTen;
 }
 
 ExynosPrimaryDisplayModule::~ExynosPrimaryDisplayModule () {
