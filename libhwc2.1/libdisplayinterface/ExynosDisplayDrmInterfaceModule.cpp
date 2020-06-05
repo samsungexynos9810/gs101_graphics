@@ -410,14 +410,17 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
     uint32_t blobId = 0;
     int ret = 0;
 
-    if (dpp.EotfLut().enable && plane->eotf_lut_property().id())
+    if (plane->eotf_lut_property().id())
     {
-        if ((ret = createEotfBlobFromIDpp(dpp, blobId)) != NO_ERROR) {
-            HWC_LOGE(mExynosDisplay, "%s: createEotfBlobFromIDpp fail",
-                    __func__);
-            return ret;
+        blobId = 0;
+        if (dpp.EotfLut().enable) {
+            if ((ret = createEotfBlobFromIDpp(dpp, blobId)) != NO_ERROR) {
+                HWC_LOGE(mExynosDisplay, "%s: createEotfBlobFromIDpp fail",
+                        __func__);
+                return ret;
+            }
+            mOldBlobsForPlaneColor.push_back(blobId);
         }
-        mOldBlobsForPlaneColor.push_back(blobId);
         if ((ret = drmReq.atomicAddProperty(plane->id(),
                         plane->eotf_lut_property(), blobId)) < 0) {
             HWC_LOGE(mExynosDisplay, "%s: Fail to set eotf_lut_property",
@@ -426,14 +429,17 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
         }
     }
 
-    if (dpp.Gm().enable && plane->gammut_matrix_property().id())
+    if (plane->gammut_matrix_property().id())
     {
-        if ((ret = createGmBlobFromIDpp(dpp, blobId)) != NO_ERROR) {
-            HWC_LOGE(mExynosDisplay, "%s: createGmBlobFromIDpp fail",
-                    __func__);
-            return ret;
+        blobId = 0;
+        if (dpp.Gm().enable) {
+            if ((ret = createGmBlobFromIDpp(dpp, blobId)) != NO_ERROR) {
+                HWC_LOGE(mExynosDisplay, "%s: createGmBlobFromIDpp fail",
+                        __func__);
+                return ret;
+            }
+            mOldBlobsForPlaneColor.push_back(blobId);
         }
-        mOldBlobsForPlaneColor.push_back(blobId);
         if ((ret = drmReq.atomicAddProperty(plane->id(),
                         plane->gammut_matrix_property(), blobId)) < 0) {
             HWC_LOGE(mExynosDisplay, "%s: Fail to set gammut_matrix_property",
@@ -442,14 +448,17 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
         }
     }
 
-    if (dpp.Dtm().enable && plane->tone_mapping_property().id())
+    if (plane->tone_mapping_property().id())
     {
-        if ((ret = createDtmBlobFromIDpp(dpp, blobId)) != NO_ERROR) {
-            HWC_LOGE(mExynosDisplay, "%s: createDtmBlobFromIDpp fail",
-                    __func__);
-            return ret;
+        blobId = 0;
+        if (dpp.Dtm().enable) {
+            if ((ret = createDtmBlobFromIDpp(dpp, blobId)) != NO_ERROR) {
+                HWC_LOGE(mExynosDisplay, "%s: createDtmBlobFromIDpp fail",
+                        __func__);
+                return ret;
+            }
+            mOldBlobsForPlaneColor.push_back(blobId);
         }
-        mOldBlobsForPlaneColor.push_back(blobId);
         if ((ret = drmReq.atomicAddProperty(plane->id(),
                         plane->tone_mapping_property(), blobId)) < 0) {
             HWC_LOGE(mExynosDisplay, "%s: Fail to set tone_mapping_property",
@@ -458,14 +467,17 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
         }
     }
 
-    if (dpp.OetfLut().enable && plane->oetf_lut_property().id())
+    if (plane->oetf_lut_property().id())
     {
-        if ((ret = createOetfBlobFromIDpp(dpp, blobId)) != NO_ERROR) {
-            HWC_LOGE(mExynosDisplay, "%s: createOetfBlobFromIDpp fail",
-                    __func__);
-            return ret;
+        blobId = 0;
+        if (dpp.OetfLut().enable) {
+            if ((ret = createOetfBlobFromIDpp(dpp, blobId)) != NO_ERROR) {
+                HWC_LOGE(mExynosDisplay, "%s: createOetfBlobFromIDpp fail",
+                        __func__);
+                return ret;
+            }
+            mOldBlobsForPlaneColor.push_back(blobId);
         }
-        mOldBlobsForPlaneColor.push_back(blobId);
         if ((ret = drmReq.atomicAddProperty(plane->id(),
                         plane->oetf_lut_property(), blobId)) < 0) {
             HWC_LOGE(mExynosDisplay, "%s: Fail to set oetf_lut_property",
