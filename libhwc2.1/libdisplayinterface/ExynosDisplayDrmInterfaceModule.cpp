@@ -259,11 +259,18 @@ int32_t ExynosDisplayDrmInterfaceModule::createOetfBlobFromIDpp(
     return NO_ERROR;
 }
 
+int32_t ExynosDisplayDrmInterfaceModule::deliverWinConfigData()
+{
+    /* Destroy old blobs for color management */
+    destroyOldBlobs(mOldBlobsForDisplayColor);
+    destroyOldBlobs(mOldBlobsForPlaneColor);
+
+    return ExynosDisplayDrmInterface::deliverWinConfigData();
+}
+
 int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
         ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq)
 {
-    destroyOldBlobs(mOldBlobsForDisplayColor);
-
     if ((mColorSettingChanged == false) ||
         (isPrimary() == false))
         return NO_ERROR;
@@ -356,8 +363,6 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
         const std::unique_ptr<DrmPlane> &plane,
         const exynos_win_config_data &config)
 {
-    destroyOldBlobs(mOldBlobsForPlaneColor);
-
     if ((mColorSettingChanged == false) ||
         (isPrimary() == false))
         return NO_ERROR;
@@ -437,8 +442,6 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
         }
     }
 
-    /* TODO: For now, Dtm setting is not verified. This should be set */
-#if 0
     if (dpp.Dtm().enable && plane->tone_mapping_property().id())
     {
         if ((ret = createDtmBlobFromIDpp(dpp, blobId)) != NO_ERROR) {
@@ -454,7 +457,6 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
             return ret;
         }
     }
-#endif
 
     if (dpp.OetfLut().enable && plane->oetf_lut_property().id())
     {
