@@ -420,6 +420,16 @@ void ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerHdrStaticMetadata(
     }
 }
 
+void ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerColorTransform(
+        LayerColorData& layerColorData,
+        std::array<float, TRANSFORM_MAT_SIZE> &matrix)
+{
+    if (layerColorData.matrix != matrix) {
+        colorSettingChanged = true;
+        layerColorData.matrix = matrix;
+    }
+}
+
 int32_t ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerColorData(
         LayerColorData& layerData, ExynosLayer* layer)
 {
@@ -434,6 +444,19 @@ int32_t ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerColorData(
     } else {
         disableLayerHdrStaticMetadata(layerData);
     }
+
+    static std::array<float, TRANSFORM_MAT_SIZE> defaultMatrix {
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    };
+    if (layer->mLayerColorTransform.enable)
+        setLayerColorTransform(layerData,
+                layer->mLayerColorTransform.mat);
+    else
+        setLayerColorTransform(layerData,
+                defaultMatrix);
 
     return NO_ERROR;
 }
