@@ -259,4 +259,18 @@ const dpu_attr_map_t dpu_attr_map_table [] =
     {DPP_ATTR_WCG, MPP_ATTR_WCG},
 };
 
+static ppc_table ppc_table_map = {
+    {PPC_IDX(MPP_G2D,PPC_FORMAT_YUV420,PPC_ROT_NO), {2.9, 2.6, 3.4, 5.1, 11.9, 2.6, 3.0}},
+    {PPC_IDX(MPP_G2D,PPC_FORMAT_YUV420,PPC_ROT), {2.0, 1.9, 3.3, 5.2, 7.0, 1.9, 3.2}},
+
+    {PPC_IDX(MPP_G2D,PPC_FORMAT_YUV8_2,PPC_ROT_NO), {1.9, 1.9, 2.7, 3.1, 4.1, 1.4, 2.4}},
+    {PPC_IDX(MPP_G2D,PPC_FORMAT_YUV8_2,PPC_ROT), {0.9, 0.9, 2.2, 2.0, 3.7, 0.9, 2.5}},
+
+    {PPC_IDX(MPP_G2D,PPC_FORMAT_YUV422,PPC_ROT_NO), {3.1, 2.2, 3.6, 5.1, 7.0, 2.2, 3.4}},
+    {PPC_IDX(MPP_G2D,PPC_FORMAT_YUV422,PPC_ROT), {2.7, 2.0, 3.0, 5.2, 6.5, 2.0, 3.3}},
+
+    {PPC_IDX(MPP_G2D,PPC_FORMAT_RGB32,PPC_ROT_NO), {3.1, 2.2, 3.6, 5.1, 7.0, 2.2, 3.4}},
+    {PPC_IDX(MPP_G2D,PPC_FORMAT_RGB32,PPC_ROT), {2.7, 2.0, 3.0, 5.2, 6.5, 2.0, 3.3}},
+};
+
 #endif
