@@ -23,6 +23,35 @@
  * ****************************************************************/
 #define RESTRICTION_NONE 0
 
+#define USE_MODULE_ATTR
+
+/* Basic supported features */
+static feature_support_t feature_table[] =
+{
+    {MPP_DPP_GF,
+        MPP_ATTR_AFBC | MPP_ATTR_BLOCK_MODE | MPP_ATTR_WINDOW_UPDATE |
+        MPP_ATTR_FLIP_H | MPP_ATTR_FLIP_V |
+        MPP_ATTR_DIM |
+        MPP_ATTR_WCG | MPP_ATTR_HDR10 |
+        MPP_ATTR_LAYER_TRANSFORM
+    },
+
+    {MPP_DPP_VGRFS,
+        MPP_ATTR_AFBC | MPP_ATTR_BLOCK_MODE | MPP_ATTR_WINDOW_UPDATE | MPP_ATTR_SCALE |
+        MPP_ATTR_FLIP_H | MPP_ATTR_FLIP_V | MPP_ATTR_ROT_90 |
+        MPP_ATTR_DIM |
+        MPP_ATTR_WCG | MPP_ATTR_HDR10 | MPP_ATTR_HDR10PLUS |
+        MPP_ATTR_LAYER_TRANSFORM
+    },
+
+    {MPP_G2D,
+        MPP_ATTR_AFBC | MPP_ATTR_SCALE |
+        MPP_ATTR_FLIP_H | MPP_ATTR_FLIP_V | MPP_ATTR_ROT_90 |
+        MPP_ATTR_WCG | MPP_ATTR_HDR10 | MPP_ATTR_HDR10PLUS | MPP_ATTR_USE_CAPA |
+        MPP_ATTR_LAYER_TRANSFORM
+    }
+};
+
 /**************************************************************************************
  * HAL_PIXEL_FORMATs
 enum {
@@ -213,6 +242,21 @@ const restriction_table_element restriction_tables[RESTRICTION_MAX] =
 {
     {RESTRICTION_RGB, restriction_size_table_rgb, sizeof(restriction_size_table_rgb)/sizeof(restriction_size_element)},
     {RESTRICTION_YUV, restriction_size_table_yuv, sizeof(restriction_size_table_yuv)/sizeof(restriction_size_element)}
+};
+
+#define USE_MODULE_DPU_ATTR_MAP
+const dpu_attr_map_t dpu_attr_map_table [] =
+{
+    {DPP_ATTR_AFBC, MPP_ATTR_AFBC},
+    {DPP_ATTR_BLOCK, MPP_ATTR_BLOCK_MODE},
+    {DPP_ATTR_FLIP, MPP_ATTR_FLIP_H | MPP_ATTR_FLIP_V},
+    {DPP_ATTR_ROT, MPP_ATTR_ROT_90},
+    {DPP_ATTR_SCALE, MPP_ATTR_SCALE},
+    {DPP_ATTR_HDR, MPP_ATTR_HDR10 | MPP_ATTR_WCG | MPP_ATTR_LAYER_TRANSFORM},
+    {DPP_ATTR_HDR10_PLUS, MPP_ATTR_HDR10PLUS | MPP_ATTR_HDR10 | MPP_ATTR_WCG | MPP_ATTR_LAYER_TRANSFORM},
+    {DPP_ATTR_C_HDR, MPP_ATTR_HDR10},
+    {DPP_ATTR_C_HDR10_PLUS, MPP_ATTR_HDR10PLUS},
+    {DPP_ATTR_WCG, MPP_ATTR_WCG},
 };
 
 #endif

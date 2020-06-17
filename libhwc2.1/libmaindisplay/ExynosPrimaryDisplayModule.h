@@ -38,6 +38,7 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                 int32_t* outIntents);
         virtual int32_t setColorModeWithRenderIntent(int32_t mode,
                 int32_t intent);
+        virtual int32_t setColorTransform(const float* matrix, int32_t hint);
         virtual int deliverWinConfigData();
         virtual int32_t updateColorConversionInfo();
 
@@ -61,19 +62,42 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                     layerDataMappingInfo.clear();
                 };
 
-                void setColorMode(hwc::ColorMode mode) {
-                    if (displayScene.color_mode != mode) {
+                template <typename T, typename M>
+                void updateInfoSingleVal(T &dst, M &src) {
+                    if (src != dst) {
                         colorSettingChanged = true;
-                        displayScene.color_mode = mode;
+                        dst = src;
                     }
                 };
 
-                void setRenderIntent(hwc::RenderIntent intent) {
-                    if (displayScene.render_intent != intent) {
-                        displayScene.render_intent = intent;
+                template <typename T, typename M>
+                void updateInfoVectorVal(std::vector<T> &dst, M *src, uint32_t size) {
+                    if ((dst.size() != size) ||
+                        !std::equal(dst.begin(), dst.end(), src)) {
                         colorSettingChanged = true;
+                        dst.resize(size);
+                        for (uint32_t i = 0; i < size; i++) {
+                            dst[i] = src[i];
+                        }
                     }
                 };
+
+                void setColorMode(hwc::ColorMode mode) {
+                    updateInfoSingleVal(displayScene.color_mode, mode);
+                };
+
+                void setRenderIntent(hwc::RenderIntent intent) {
+                    updateInfoSingleVal(displayScene.render_intent, intent);
+                };
+
+                void setColorTransform(const float* matrix) {
+                    for (uint32_t i = 0; i < displayScene.matrix.size(); i++) {
+                        if (displayScene.matrix[i] != matrix[i]) {
+                            colorSettingChanged = true;
+                            displayScene.matrix[i] = matrix[i];
+                        }
+                    }
+                }
 
                 LayerColorData& getLayerColorDataInstance(uint32_t index);
                 int32_t setLayerDataMappingInfo(ExynosLayer* layer, uint32_t index);
@@ -82,6 +106,11 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                 void disableLayerHdrStaticMetadata(LayerColorData& layerColorData);
                 void setLayerHdrStaticMetadata(LayerColorData& layerColorData,
                         const ExynosHdrStaticInfo& exynosHdrStaticInfo);
+                void setLayerColorTransform(LayerColorData& layerColorData,
+                        std::array<float, TRANSFORM_MAT_SIZE> &matrix);
+                void disableLayerHdrDynamicMetadata(LayerColorData& layerColorData);
+                void setLayerHdrDynamicMetadata(LayerColorData& layerColorData,
+                        const ExynosHdrDynamicInfo& exynosHdrDynamicInfo);
                 int32_t setLayerColorData(LayerColorData& layerData,
                         ExynosLayer* layer);
                 bool needDisplayColorSetting();
