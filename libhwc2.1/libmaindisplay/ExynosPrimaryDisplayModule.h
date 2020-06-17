@@ -38,6 +38,7 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                 int32_t* outIntents);
         virtual int32_t setColorModeWithRenderIntent(int32_t mode,
                 int32_t intent);
+        virtual int32_t setColorTransform(const float* matrix, int32_t hint);
         virtual int deliverWinConfigData();
         virtual int32_t updateColorConversionInfo();
 
@@ -88,6 +89,15 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                 void setRenderIntent(hwc::RenderIntent intent) {
                     updateInfoSingleVal(displayScene.render_intent, intent);
                 };
+
+                void setColorTransform(const float* matrix) {
+                    for (uint32_t i = 0; i < displayScene.matrix.size(); i++) {
+                        if (displayScene.matrix[i] != matrix[i]) {
+                            colorSettingChanged = true;
+                            displayScene.matrix[i] = matrix[i];
+                        }
+                    }
+                }
 
                 LayerColorData& getLayerColorDataInstance(uint32_t index);
                 int32_t setLayerDataMappingInfo(ExynosLayer* layer, uint32_t index);
