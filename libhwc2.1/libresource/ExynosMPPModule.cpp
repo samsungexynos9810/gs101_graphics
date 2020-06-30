@@ -25,6 +25,8 @@ ExynosMPPModule::ExynosMPPModule(ExynosResourceManager* resourceManager,
     : ExynosMPP(resourceManager, physicalType, logicalType, name, physicalIndex, logicalIndex, preAssignInfo),
     mChipId(0x00)
 {
+    if (mLogicalType == MPP_LOGICAL_G2D_RGB)
+        mEnable = false;
 }
 
 ExynosMPPModule::~ExynosMPPModule()
