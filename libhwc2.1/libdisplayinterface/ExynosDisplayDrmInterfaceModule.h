@@ -29,7 +29,6 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
         ExynosDisplayDrmInterfaceModule(ExynosDisplay *exynosDisplay);
         virtual ~ExynosDisplayDrmInterfaceModule();
 
-        virtual int32_t deliverWinConfigData();
         virtual int32_t setDisplayColorSetting(
                 ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq);
         virtual int32_t setPlaneColorSetting(
@@ -59,9 +58,6 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
                 uint32_t &blobId);
         int32_t createOetfBlobFromIDpp(const IDisplayColorGS101::IDpp &dpp,
                 uint32_t &blobId);
-
-        std::vector<uint32_t> mOldBlobsForDisplayColor;
-        std::vector<uint32_t> mOldBlobsForPlaneColor;
     private:
         bool mColorSettingChanged = false;
 };

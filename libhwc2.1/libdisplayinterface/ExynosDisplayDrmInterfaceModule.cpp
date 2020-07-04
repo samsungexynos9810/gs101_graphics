@@ -51,8 +51,6 @@ ExynosDisplayDrmInterfaceModule::ExynosDisplayDrmInterfaceModule(ExynosDisplay *
 
 ExynosDisplayDrmInterfaceModule::~ExynosDisplayDrmInterfaceModule()
 {
-    destroyOldBlobs(mOldBlobsForDisplayColor);
-    destroyOldBlobs(mOldBlobsForPlaneColor);
 }
 
 void ExynosDisplayDrmInterfaceModule::destroyOldBlobs(
@@ -260,15 +258,6 @@ int32_t ExynosDisplayDrmInterfaceModule::createOetfBlobFromIDpp(
     return NO_ERROR;
 }
 
-int32_t ExynosDisplayDrmInterfaceModule::deliverWinConfigData()
-{
-    /* Destroy old blobs for color management */
-    destroyOldBlobs(mOldBlobsForDisplayColor);
-    destroyOldBlobs(mOldBlobsForPlaneColor);
-
-    return ExynosDisplayDrmInterface::deliverWinConfigData();
-}
-
 int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
         ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq)
 {
@@ -288,7 +277,7 @@ int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
             HWC_LOGE(mExynosDisplay, "%s: createCgcBlobFromIDqe fail", __func__);
             return ret;
         }
-        mOldBlobsForDisplayColor.push_back(blobId);
+        drmReq.addOldBlob(blobId);
         if ((ret = drmReq.atomicAddProperty(mDrmCrtc->id(),
                         mDrmCrtc->cgc_lut_property(), blobId)) < 0) {
             HWC_LOGE(mExynosDisplay, "%s: Fail to set cgc_lut_property",
@@ -302,7 +291,7 @@ int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
                     __func__);
             return ret;
         }
-        mOldBlobsForDisplayColor.push_back(blobId);
+        drmReq.addOldBlob(blobId);
         if ((ret = drmReq.atomicAddProperty(mDrmCrtc->id(),
                         mDrmCrtc->degamma_lut_property(), blobId)) < 0) {
             HWC_LOGE(mExynosDisplay, "%s: Fail to set degamma_lut_property",
@@ -316,8 +305,7 @@ int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
                     __func__);
             return ret;
         }
-        mOldBlobsForDisplayColor.push_back(blobId);
-        ALOGD("set regamma lut %d", blobId);
+        drmReq.addOldBlob(blobId);
         if ((ret = drmReq.atomicAddProperty(mDrmCrtc->id(),
                         mDrmCrtc->gamma_lut_property(), blobId)) < 0) {
             HWC_LOGE(mExynosDisplay, "%s: Fail to set gamma_lut_property",
@@ -331,8 +319,7 @@ int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
                     __func__);
             return ret;
         }
-        mOldBlobsForDisplayColor.push_back(blobId);
-        ALOGD("set gamma matrix %d", blobId);
+        drmReq.addOldBlob(blobId);
         if ((ret = drmReq.atomicAddProperty(mDrmCrtc->id(),
                         mDrmCrtc->gamma_matrix_property(), blobId)) < 0) {
             HWC_LOGE(mExynosDisplay, "%s: Fail to set gamma_matrix_property",
@@ -346,8 +333,7 @@ int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
                     __func__);
             return ret;
         }
-        mOldBlobsForDisplayColor.push_back(blobId);
-        ALOGD("set linear matrix %d", blobId);
+        drmReq.addOldBlob(blobId);
         if ((ret = drmReq.atomicAddProperty(mDrmCrtc->id(),
                         mDrmCrtc->linear_matrix_property(), blobId)) < 0) {
             HWC_LOGE(mExynosDisplay, "%s: Fail to set linear_matrix_property",
@@ -420,7 +406,7 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
                         __func__);
                 return ret;
             }
-            mOldBlobsForPlaneColor.push_back(blobId);
+            drmReq.addOldBlob(blobId);
         }
         if ((ret = drmReq.atomicAddProperty(plane->id(),
                         plane->eotf_lut_property(), blobId)) < 0) {
@@ -439,7 +425,7 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
                         __func__);
                 return ret;
             }
-            mOldBlobsForPlaneColor.push_back(blobId);
+            drmReq.addOldBlob(blobId);
         }
         if ((ret = drmReq.atomicAddProperty(plane->id(),
                         plane->gammut_matrix_property(), blobId)) < 0) {
@@ -458,7 +444,7 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
                         __func__);
                 return ret;
             }
-            mOldBlobsForPlaneColor.push_back(blobId);
+            drmReq.addOldBlob(blobId);
         }
         if ((ret = drmReq.atomicAddProperty(plane->id(),
                         plane->tone_mapping_property(), blobId)) < 0) {
@@ -477,7 +463,7 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
                         __func__);
                 return ret;
             }
-            mOldBlobsForPlaneColor.push_back(blobId);
+            drmReq.addOldBlob(blobId);
         }
         if ((ret = drmReq.atomicAddProperty(plane->id(),
                         plane->oetf_lut_property(), blobId)) < 0) {
