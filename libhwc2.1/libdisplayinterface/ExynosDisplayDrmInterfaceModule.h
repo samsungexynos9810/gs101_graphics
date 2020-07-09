@@ -20,7 +20,6 @@
 #include <gs101/displaycolor/displaycolor_gs101.h>
 
 #include "ExynosDisplayDrmInterface.h"
-#include "DeconDrmHeader.h"
 
 using namespace displaycolor;
 
