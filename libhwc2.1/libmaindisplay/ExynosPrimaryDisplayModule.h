@@ -16,10 +16,12 @@
 #ifndef EXYNOS_DISPLAY_MODULE_H
 #define EXYNOS_DISPLAY_MODULE_H
 
+#include <gs101/displaycolor/displaycolor_gs101.h>
+
+#include "DisplayColorLoader.h"
 #include "ExynosDisplay.h"
 #include "ExynosPrimaryDisplay.h"
 #include "ExynosLayer.h"
-#include <displaycolor/displaycolor_gs101.h>
 
 using namespace displaycolor;
 
@@ -129,8 +131,8 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
 
     private:
         int32_t setLayersColorData();
-        std::unique_ptr<IDisplayColorGS101> mDisplayColorInterface;
+        IDisplayColorGS101 *mDisplayColorInterface;
         DisplaySceneInfo mDisplaySceneInfo;
-
+        DisplayColorLoader mDisplayColorLoader;
 };
 #endif

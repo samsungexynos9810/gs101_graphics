@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_SHARED_LIBRARIES += libdisplaycolor
-
 LOCAL_SRC_FILES += \
 	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libdevice/ExynosDeviceModule.cpp \
 	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libmaindisplay/ExynosPrimaryDisplayModule.cpp \
@@ -22,3 +20,8 @@ LOCAL_SRC_FILES += \
 	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libexternaldisplay/ExynosExternalDisplayModule.cpp \
 	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libvirtualdisplay/ExynosVirtualDisplayModule.cpp \
 	../../$(TARGET_BOARD_PLATFORM)/libhwc2.1/libdisplayinterface/ExynosDisplayDrmInterfaceModule.cpp
+
+LOCAL_CFLAGS += -DDISPLAY_COLOR_LIB=\"libdisplaycolor.so\"
+
+LOCAL_C_INCLUDES += \
+	$(TOP)/hardware/google/graphics/gs101/include

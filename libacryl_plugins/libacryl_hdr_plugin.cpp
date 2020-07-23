@@ -18,8 +18,7 @@
 #include <cassert>
 #include <array>
 
-#include <displaycolor/displaycolor_gs101.h>
-
+#include <gs101/displaycolor/displaycolor_gs101.h>
 #include <hardware/exynos/g2d_hdr_plugin.h>
 
 #define HDR_BASE 0x3000

@@ -33,13 +33,13 @@ mpp_phycal_type_t getMPPTypeFromDPPChannel(uint32_t channel) {
 }
 
 ExynosPrimaryDisplayModule::ExynosPrimaryDisplayModule(uint32_t __unused type, ExynosDevice *device)
-    :    ExynosPrimaryDisplay(HWC_DISPLAY_PRIMARY, device)
+    :    ExynosPrimaryDisplay(HWC_DISPLAY_PRIMARY, device), mDisplayColorLoader(DISPLAY_COLOR_LIB)
 {
 #ifdef FORCE_GPU_COMPOSITION
     exynosHWCControl.forceGpu = true;
 #endif
 
-    mDisplayColorInterface = IDisplayColorGS101::Create();
+    mDisplayColorInterface = mDisplayColorLoader.GetDisplayColorGS101();
 }
 
 ExynosPrimaryDisplayModule::~ExynosPrimaryDisplayModule () {

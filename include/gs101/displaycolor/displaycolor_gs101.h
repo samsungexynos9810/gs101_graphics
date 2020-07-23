@@ -183,9 +183,6 @@ class IDisplayColorGS101 : public IDisplayColorGeneric {
         virtual ~IDqe() {}
     };
 
-    /// Create a GS101 instance.
-    static std::unique_ptr<IDisplayColorGS101> Create();
-
     /**
      * @brief Get handles to Display Pre-Processor (DPP) data accessors.
      *
@@ -200,6 +197,13 @@ class IDisplayColorGS101 : public IDisplayColorGeneric {
 
     virtual ~IDisplayColorGS101() {}
 };
+
+extern "C" {
+
+/// Get the GS101 instance.
+IDisplayColorGS101* GetDisplayColorGS101();
+
+}
 
 }  // namespace displaycolor
 
