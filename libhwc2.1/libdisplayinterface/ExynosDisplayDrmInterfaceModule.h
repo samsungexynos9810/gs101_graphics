@@ -17,9 +17,10 @@
 #ifndef EXYNOS_DISPLAY_DRM_INTERFACE_MODULE_H
 #define EXYNOS_DISPLAY_DRM_INTERFACE_MODULE_H
 
+#include <gs101/displaycolor/displaycolor_gs101.h>
+
 #include "ExynosDisplayDrmInterface.h"
 #include "DeconDrmHeader.h"
-#include <displaycolor/displaycolor_gs101.h>
 
 using namespace displaycolor;
 
