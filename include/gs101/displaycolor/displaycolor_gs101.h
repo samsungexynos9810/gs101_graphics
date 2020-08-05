@@ -27,13 +27,10 @@ namespace displaycolor {
 
 /// An interface for accessing GS101 color management data.
 class IDisplayColorGS101 : public IDisplayColorGeneric {
-   public:
+   private:
     /// Register data for matrices in DPP and DQE.
-    template <typename T>
-    struct MatrixData : public DisplayStage {
-        using Container = T;
-        static constexpr size_t kDimensions = 3;
-
+    template <typename T, size_t kDimensions>
+    struct MatrixData {
         /**
          * DQE0_GAMMA_MATRIX_COEFF0..4[GAMMA_MATRIX_COEFF_xx]
          * DQE0_LINEAR_MATRIX_COEFF0..4[LINEAR_MATRIX_COEFF_xx]
@@ -49,6 +46,7 @@ class IDisplayColorGS101 : public IDisplayColorGeneric {
         std::array<T, kDimensions> offsets{};
     };
 
+   public:
     /**
      * @brief Interface for accessing data for DPP stages.
      *
@@ -58,33 +56,68 @@ class IDisplayColorGS101 : public IDisplayColorGeneric {
      * mapping (DTM) for HDR10+, only DPP layers L1/L3/L5 support this stage.
      */
     struct IDpp {
+     private:
         /// Register data for transfer function LUTs in DPP)
         template <typename XT, typename YT, size_t N>
-        struct TransferFunctionData : public DisplayStage {
-            using XContainer = XT;
-            using YContainer = YT;
-            static constexpr size_t kLutLen = N;
-
+        struct TransferFunctionData {
             /**
              * DPP_HDR_LSI_L#_EOTF_POSX0~64[POSXn], #(0..5), n(0..1)
              * DPP_HDR_LSI_L#_OETF_POSX0~16[POSXn], #(0..5), n(0..1)
              * DPP_HDR_LSI_L#_TM_POSX0~16[POSXn], #(1, 3, 5), n(0..1)
              */
-            std::array<XT, kLutLen> posx;
+            std::array<XT, N> posx;
             /**
              * DPP_HDR_LSI_L#_EOTF_POSY0~128[POSY0], #(0..5)
              * DPP_HDR_LSI_L#_OETF_POSY0~16[POSYn] #(0..5), n(0..1)
              * DPP_HDR_LSI_L#_TM_POSY0~32[POSY0], #(1, 3, 5)
              */
-            std::array<YT, kLutLen> posy;
+            std::array<YT, N> posy;
         };
 
-        /// Register data for the EOTF LUT in DPP.
-        struct EotfData : public TransferFunctionData<uint16_t, uint32_t, 129> {
+        struct EotfConfigType {
+            using XContainer = uint16_t;
+            using YContainer = uint32_t;
+            static constexpr size_t kLutLen = 129;
+
+            TransferFunctionData<XContainer, YContainer, kLutLen> tf_data;
         };
+
+        struct GmConfigType {
+            using Container = uint32_t;
+            static constexpr size_t kDimensions = 3;
+
+            MatrixData<Container, kDimensions> matrix_data;
+        };
+
+        struct DtmConfigType {
+            using XContainer = uint16_t;
+            using YContainer = uint32_t;
+            static constexpr size_t kLutLen = 33;
+
+            TransferFunctionData<XContainer, YContainer, kLutLen> tf_data;
+            uint16_t coeff_r;    // DPP_HDR_LSI_L#_TM_COEF[COEFR] #(1, 3, 5)
+            uint16_t coeff_g;    // DPP_HDR_LSI_L#_TM_COEF[COEFG] #(1, 3, 5)
+            uint16_t coeff_b;    // DPP_HDR_LSI_L#_TM_COEF[COEFB] #(1, 3, 5)
+            uint16_t rng_x_min;  // DPP_HDR_LSI_L#_TM_RNGX[MINX] #(1, 3, 5)
+            uint16_t rng_x_max;  // DPP_HDR_LSI_L#_TM_RNGX[MAXX] #(1, 3, 5)
+            uint16_t rng_y_min;  // DPP_HDR_LSI_L#_TM_RNGY[MINY] #(1, 3, 5)
+            uint16_t rng_y_max;  // DPP_HDR_LSI_L#_TM_RNGY[MAXY] #(1, 3, 5)
+        };
+
+        struct OetfConfigType {
+            using XContainer = uint32_t;
+            using YContainer = uint16_t;
+            static constexpr size_t kLutLen = 33;
+
+            TransferFunctionData<XContainer, YContainer, kLutLen> tf_data;
+        };
+
+     public:
+        /// Register data for the EOTF LUT in DPP.
+        using EotfData = DisplayStage<EotfConfigType>;
 
         /// Register data for the gamut mapping (GM) matrix in DPP.
-        struct GmData : public MatrixData<uint32_t> {};
+        using GmData = DisplayStage<GmConfigType>;
 
         /**
          * @brief Register data for the DTM stage in DPP.
@@ -96,19 +129,10 @@ class IDisplayColorGS101 : public IDisplayColorGeneric {
          * validate layers and HW capabilities correctly, before calling this
          * API.
          */
-        struct DtmData : public TransferFunctionData<uint16_t, uint32_t, 33> {
-            uint16_t coeff_r;    // DPP_HDR_LSI_L#_TM_COEF[COEFR] #(1, 3, 5)
-            uint16_t coeff_g;    // DPP_HDR_LSI_L#_TM_COEF[COEFG] #(1, 3, 5)
-            uint16_t coeff_b;    // DPP_HDR_LSI_L#_TM_COEF[COEFB] #(1, 3, 5)
-            uint16_t rng_x_min;  // DPP_HDR_LSI_L#_TM_RNGX[MINX] #(1, 3, 5)
-            uint16_t rng_x_max;  // DPP_HDR_LSI_L#_TM_RNGX[MAXX] #(1, 3, 5)
-            uint16_t rng_y_min;  // DPP_HDR_LSI_L#_TM_RNGY[MINY] #(1, 3, 5)
-            uint16_t rng_y_max;  // DPP_HDR_LSI_L#_TM_RNGY[MAXY] #(1, 3, 5)
-        };
+        using DtmData = DisplayStage<DtmConfigType>;
 
         /// Register data for the OETF LUT in DPP.
-        struct OetfData : public TransferFunctionData<uint32_t, uint16_t, 33> {
-        };
+        using OetfData = DisplayStage<OetfConfigType>;
 
         /// Get data for the EOTF LUT.
         virtual const EotfData& EotfLut() const = 0;
@@ -130,40 +154,57 @@ class IDisplayColorGS101 : public IDisplayColorGeneric {
 
     /// Interface for accessing data for DQE stages.
     struct IDqe {
-        /// Register data for the gamma and linear matrices in DQE.
-        struct DqeMatrixData : public MatrixData<uint16_t> {};
+     private:
+        struct DqeMatrixConfigType {
+            using Container = uint16_t;
+            static constexpr size_t kDimensions = 3;
 
-        /// Register data for the degamma LUT in DQE.
-        struct DegammaLutData : public DisplayStage {
-            static constexpr size_t kLutLen = 65;
-
-            /// DEGAMMA_LUT_{00-64} (8 bit: 0~1024, 10 bit: 0~4096)
-            std::array<uint16_t, kLutLen> values{};
+            struct MatrixData<Container, kDimensions> matrix_data;
         };
 
-        /// Register data for CGC.
-        struct CgcData : public DisplayStage {
+        struct DegammaConfigType {
+            using Container = uint16_t;
+            static constexpr size_t kLutLen = 65;
+
+            std::array<Container, kLutLen> values;
+        };
+
+        struct CgcConfigType {
+            using Container = uint32_t;
             static constexpr size_t kChannelLutLen = 2457;
 
             /// DQE0_CGC_LUT_R_N{0-2456} (8 bit: 0~2047, 10 bit: 0~8191)
-            std::array<uint32_t, kChannelLutLen> r_values{};
+            std::array<Container, kChannelLutLen> r_values{};
             /// DQE0_CGC_LUT_G_N{0-2456} (8 bit: 0~2047, 10 bit: 0~8191)
-            std::array<uint32_t, kChannelLutLen> g_values{};
+            std::array<Container, kChannelLutLen> g_values{};
             /// DQE0_CGC_LUT_B_N{0-2456} (8 bit: 0~2047, 10 bit: 0~8191)
-            std::array<uint32_t, kChannelLutLen> b_values{};
+            std::array<Container, kChannelLutLen> b_values{};
         };
 
-        /// Register data for the regamma LUT.
-        struct RegammaLutData : public DisplayStage {
+        struct RegammaConfigType {
+            using Container = uint16_t;
             static constexpr size_t kChannelLutLen = 65;
 
             /// REGAMMA LUT_R_{00-64} (8 bit: 0~1024, 10 bit: 0~4096)
-            std::array<uint16_t, kChannelLutLen> r_values{};
+            std::array<Container, kChannelLutLen> r_values{};
             /// REGAMMA LUT_G_{00-64} (8 bit: 0~1024, 10 bit: 0~4096)
-            std::array<uint16_t, kChannelLutLen> g_values{};
+            std::array<Container, kChannelLutLen> g_values{};
             /// REGAMMA LUT_B_{00-64} (8 bit: 0~1024, 10 bit: 0~4096)
-            std::array<uint16_t, kChannelLutLen> b_values{};
+            std::array<Container, kChannelLutLen> b_values{};
         };
+
+     public:
+        /// Register data for the gamma and linear matrices in DQE.
+        using DqeMatrixData = DisplayStage<DqeMatrixConfigType>;
+
+        /// Register data for the degamma LUT in DQE.
+        using DegammaLutData = DisplayStage<DegammaConfigType>;
+
+        /// Register data for CGC.
+        using CgcData = DisplayStage<CgcConfigType>;
+
+        /// Register data for the regamma LUT.
+        using RegammaLutData = DisplayStage<RegammaConfigType>;
 
         /// Get data for the gamma-space matrix.
         virtual const DqeMatrixData& GammaMatrix() const = 0;
