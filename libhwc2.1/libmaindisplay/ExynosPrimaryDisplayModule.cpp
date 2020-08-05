@@ -114,7 +114,7 @@ int32_t ExynosPrimaryDisplayModule::getColorModes(
         uint32_t* outNumModes, int32_t* outModes)
 {
     const ColorModesMap colorModeMap =
-        mDisplayColorInterface->ColorModesAndRenderIntents();
+        mDisplayColorInterface->ColorModesAndRenderIntents(DisplayType::DISPLAY_PRIMARY);
     ALOGD("%s: size(%zu)", __func__, colorModeMap.size());
     if (outModes == nullptr) {
         *outNumModes = colorModeMap.size();
@@ -141,7 +141,7 @@ int32_t ExynosPrimaryDisplayModule::setColorMode(int32_t mode)
 {
     ALOGD("%s: mode(%d)", __func__, mode);
     const ColorModesMap colorModeMap =
-        mDisplayColorInterface->ColorModesAndRenderIntents();
+        mDisplayColorInterface->ColorModesAndRenderIntents(DisplayType::DISPLAY_PRIMARY);
     hwc::ColorMode colorMode =
         static_cast<hwc::ColorMode>(mode);
     const auto it = colorModeMap.find(colorMode);
@@ -162,7 +162,7 @@ int32_t ExynosPrimaryDisplayModule::getRenderIntents(int32_t mode,
         uint32_t* outNumIntents, int32_t* outIntents)
 {
     const ColorModesMap colorModeMap =
-        mDisplayColorInterface->ColorModesAndRenderIntents();
+        mDisplayColorInterface->ColorModesAndRenderIntents(DisplayType::DISPLAY_PRIMARY);
     ALOGD("%s, size(%zu)", __func__, colorModeMap.size());
     hwc::ColorMode colorMode =
         static_cast<hwc::ColorMode>(mode);
@@ -197,7 +197,7 @@ int32_t ExynosPrimaryDisplayModule::setColorModeWithRenderIntent(int32_t mode,
 {
     ALOGD("%s: mode(%d), intent(%d)", __func__, mode, intent);
     const ColorModesMap colorModeMap =
-        mDisplayColorInterface->ColorModesAndRenderIntents();
+        mDisplayColorInterface->ColorModesAndRenderIntents(DisplayType::DISPLAY_PRIMARY);
     hwc::ColorMode colorMode =
         static_cast<hwc::ColorMode>(mode);
     hwc::RenderIntent renderIntent =

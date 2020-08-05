@@ -143,10 +143,10 @@ public:
                 offset = set_and_get_next_offset(offset, item);
         }
 
-        void updateTmCoef(const displaycolor::IDisplayColorGS101::IDpp::DtmData &data, uint32_t offset) {
-            offset = set_and_get_next_offset(offset, data.coeff_r | (data.coeff_g << 10) | (data.coeff_b << 20));
-            offset = set_and_get_next_offset(offset, data.rng_x_min | (data.rng_x_max << 16));
-            set_and_get_next_offset(offset, data.rng_y_min | (data.rng_y_max << 16));
+        void updateTmCoef(const displaycolor::IDisplayColorGS101::IDpp::DtmData::ConfigType &config, uint32_t offset) {
+            offset = set_and_get_next_offset(offset, config.coeff_r | (config.coeff_g << 10) | (config.coeff_b << 20));
+            offset = set_and_get_next_offset(offset, config.rng_x_min | (config.rng_x_max << 16));
+            set_and_get_next_offset(offset, config.rng_y_min | (config.rng_y_max << 16));
         }
 
         void updateHdr() {
@@ -186,28 +186,28 @@ public:
             if (layer) {
                 uint32_t modectl = 0;
 
-                if (layer->EotfLut().enable) {
-                    mCmdList.updateDouble(layer->EotfLut().posx, HDR_EOTF_POSX(i));
-                    mCmdList.updateSingle(layer->EotfLut().posy, HDR_EOTF_POSY(i));
+                if (layer->EotfLut().enable && layer->EotfLut().config != nullptr) {
+                    mCmdList.updateDouble(layer->EotfLut().config->tf_data.posx, HDR_EOTF_POSX(i));
+                    mCmdList.updateSingle(layer->EotfLut().config->tf_data.posy, HDR_EOTF_POSY(i));
                     modectl |= HDR_ENABLE_EOTF;
                 }
 
-                if (layer->Gm().enable) {
-                    mCmdList.updateSingle(layer->Gm().coeffs, HDR_GM_COEF(i));
-                    mCmdList.updateSingle(layer->Gm().offsets, HDR_GM_OFF(i));
+                if (layer->Gm().enable && layer->Gm().config != nullptr) {
+                    mCmdList.updateSingle(layer->Gm().config->matrix_data.coeffs, HDR_GM_COEF(i));
+                    mCmdList.updateSingle(layer->Gm().config->matrix_data.offsets, HDR_GM_OFF(i));
                     modectl |= HDR_ENABLE_GM;
                 }
 
-                if (layer->Dtm().enable) {
-                    mCmdList.updateTmCoef(layer->Dtm(), HDR_TM_COEF(i));
-                    mCmdList.updateDouble(layer->Dtm().posx, HDR_TM_POSX(i));
-                    mCmdList.updateSingle(layer->Dtm().posy, HDR_TM_POSY(i));
+                if (layer->Dtm().enable && layer->Dtm().config != nullptr) {
+                    mCmdList.updateTmCoef(*layer->Dtm().config, HDR_TM_COEF(i));
+                    mCmdList.updateDouble(layer->Dtm().config->tf_data.posx, HDR_TM_POSX(i));
+                    mCmdList.updateSingle(layer->Dtm().config->tf_data.posy, HDR_TM_POSY(i));
                     modectl |= HDR_ENABLE_DTM;
                 }
 
-                if (layer->OetfLut().enable) {
-                    mCmdList.updateDouble(layer->OetfLut().posx, HDR_OETF_POSX(i));
-                    mCmdList.updateDouble(layer->OetfLut().posy, HDR_OETF_POSY(i));
+                if (layer->OetfLut().enable && layer->OetfLut().config != nullptr) {
+                    mCmdList.updateDouble(layer->OetfLut().config->tf_data.posx, HDR_OETF_POSX(i));
+                    mCmdList.updateDouble(layer->OetfLut().config->tf_data.posy, HDR_OETF_POSY(i));
                     modectl |= HDR_ENABLE_OETF;
                 }
 

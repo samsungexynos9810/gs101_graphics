@@ -99,17 +99,19 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
                     SaveBlob::init(drmDevice, DPP_BLOB_NUM);
                 };
         };
+        template<typename StageDataType>
         int32_t setDisplayColorBlob(
                 const DrmProperty &prop,
                 const uint32_t type,
-                const IDisplayColorGeneric::DisplayStage &stage,
+                const StageDataType &stage,
                 const IDisplayColorGS101::IDqe &dqe,
                 ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq);
+        template<typename StageDataType>
         int32_t setPlaneColorBlob(
                 const std::unique_ptr<DrmPlane> &plane,
                 const DrmProperty &prop,
                 const uint32_t type,
-                const IDisplayColorGeneric::DisplayStage &stage,
+                const StageDataType &stage,
                 const IDisplayColorGS101::IDpp &dpp,
                 const uint32_t dppIndex,
                 ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq);
