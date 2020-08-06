@@ -152,14 +152,40 @@ int32_t ExynosDisplayDrmInterfaceModule::createRegammaLutBlobFromIDqe(
 int32_t ExynosDisplayDrmInterfaceModule::createGammaMatBlobFromIDqe(
         const IDisplayColorGS101::IDqe &dqe, uint32_t &blobId)
 {
-    /* TODO: This function should be implemented */
+    int ret = 0;
+    struct exynos_matrix gamma_matrix;
+    if ((ret = convertDqeMatrixDataToMatrix(
+                    dqe.GammaMatrix(), gamma_matrix, DRM_SAMSUNG_MATRIX_DIMENS)) != NO_ERROR)
+    {
+        HWC_LOGE(mExynosDisplay, "Failed to convert gamma matrix");
+        return ret;
+    }
+    ret = mDrmDevice->CreatePropertyBlob(&gamma_matrix, sizeof(gamma_matrix), &blobId);
+    if (ret) {
+        HWC_LOGE(mExynosDisplay, "Failed to create gamma matrix blob %d", ret);
+        return ret;
+    }
+
     return NO_ERROR;
 }
 
 int32_t ExynosDisplayDrmInterfaceModule::createLinearMatBlobFromIDqe(
         const IDisplayColorGS101::IDqe &dqe, uint32_t &blobId)
 {
-    /* TODO: This function should be implemented */
+    int ret = 0;
+    struct exynos_matrix linear_matrix;
+    if ((ret = convertDqeMatrixDataToMatrix(
+                    dqe.LinearMatrix(), linear_matrix, DRM_SAMSUNG_MATRIX_DIMENS)) != NO_ERROR)
+    {
+        HWC_LOGE(mExynosDisplay, "Failed to convert linear matrix");
+        return ret;
+    }
+    ret = mDrmDevice->CreatePropertyBlob(&linear_matrix, sizeof(linear_matrix), &blobId);
+    if (ret) {
+        HWC_LOGE(mExynosDisplay, "Failed to create linear matrix blob %d", ret);
+        return ret;
+    }
+
     return NO_ERROR;
 }
 
