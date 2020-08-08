@@ -123,6 +123,10 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         /* Call getDppForLayer() only if hasDppForLayer() is true */
         bool hasDppForLayer(ExynosLayer* layer);
         const IDisplayColorGS101::IDpp& getDppForLayer(ExynosLayer* layer);
+        int32_t getDppIndexForLayer(ExynosLayer* layer);
+        size_t getNumOfDpp() {
+            return mDisplaySceneInfo.layerDataMappingInfo.size();
+        };
 
         const IDisplayColorGS101::IDqe& getDqe()
         {

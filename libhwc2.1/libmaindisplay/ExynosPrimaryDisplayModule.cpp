@@ -303,6 +303,15 @@ const IDisplayColorGS101::IDpp& ExynosPrimaryDisplayModule::getDppForLayer(Exyno
     return mDisplayColorInterface->Dpp()[index].get();
 }
 
+int32_t ExynosPrimaryDisplayModule::getDppIndexForLayer(ExynosLayer* layer)
+{
+    if (mDisplaySceneInfo.layerDataMappingInfo.count(layer) == 0)
+        return -1;
+    uint32_t index = mDisplaySceneInfo.layerDataMappingInfo[layer];
+
+    return static_cast<int32_t>(index);
+}
+
 int ExynosPrimaryDisplayModule::deliverWinConfigData()
 {
     int ret = 0;
