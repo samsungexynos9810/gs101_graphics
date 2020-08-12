@@ -306,8 +306,6 @@ int ExynosPrimaryDisplayModule::deliverWinConfigData()
 
     ret = ExynosDisplay::deliverWinConfigData();
 
-    /* clear flag and layer mapping info */
-    mDisplaySceneInfo.reset();
     return ret;
 }
 
@@ -488,6 +486,9 @@ int32_t ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerColorData(
 int32_t ExynosPrimaryDisplayModule::updateColorConversionInfo()
 {
     int ret = 0;
+    /* clear flag and layer mapping info before setting */
+    mDisplaySceneInfo.reset();
+
     if ((ret = setLayersColorData()) != NO_ERROR)
         return ret;
     if (hwcCheckDebugMessages(eDebugColorManagement))
