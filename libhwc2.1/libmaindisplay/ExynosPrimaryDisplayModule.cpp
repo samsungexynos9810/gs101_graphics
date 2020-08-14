@@ -150,6 +150,10 @@ int32_t ExynosPrimaryDisplayModule::setColorMode(int32_t mode)
     }
     mDisplaySceneInfo.setColorMode(colorMode);
 
+    if (mColorMode != mode)
+        setGeometryChanged(GEOMETRY_DISPLAY_COLOR_MODE_CHANGED);
+    mColorMode = (android_color_mode_t)mode;
+
     return HWC2_ERROR_NONE;
 }
 
@@ -214,6 +218,10 @@ int32_t ExynosPrimaryDisplayModule::setColorModeWithRenderIntent(int32_t mode,
 
     mDisplaySceneInfo.setColorMode(colorMode);
     mDisplaySceneInfo.setRenderIntent(renderIntent);
+
+    if (mColorMode != mode)
+        setGeometryChanged(GEOMETRY_DISPLAY_COLOR_MODE_CHANGED);
+    mColorMode = (android_color_mode_t)mode;
 
     return HWC2_ERROR_NONE;
 }
