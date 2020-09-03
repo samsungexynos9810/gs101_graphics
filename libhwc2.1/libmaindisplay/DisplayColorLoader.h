@@ -40,9 +40,9 @@ class DisplayColorLoader {
           }
       }
 
-      displaycolor::IDisplayColorGS101* GetDisplayColorGS101() {
+      displaycolor::IDisplayColorGS101* GetDisplayColorGS101(size_t display_num) {
           if (get_display_color_gs101 != nullptr) {
-              return get_display_color_gs101();
+              return get_display_color_gs101(display_num);
           }
 
           return nullptr;
@@ -56,7 +56,7 @@ class DisplayColorLoader {
 
     private:
       void *lib_handle;
-      displaycolor::IDisplayColorGS101* (*get_display_color_gs101)();
+      displaycolor::IDisplayColorGS101* (*get_display_color_gs101)(size_t);
 };
 
 #endif //DISPLAY_COLOR_LOADER_H

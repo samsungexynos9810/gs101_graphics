@@ -39,7 +39,7 @@ ExynosPrimaryDisplayModule::ExynosPrimaryDisplayModule(uint32_t __unused type, E
     exynosHWCControl.forceGpu = true;
 #endif
 
-    mDisplayColorInterface = mDisplayColorLoader.GetDisplayColorGS101();
+    mDisplayColorInterface = mDisplayColorLoader.GetDisplayColorGS101(1);
     mDisplaySceneInfo.displayScene.dpu_bit_depth = BitDepth::kTen;
 }
 
@@ -289,9 +289,9 @@ bool ExynosPrimaryDisplayModule::hasDppForLayer(ExynosLayer* layer)
         return false;
 
     uint32_t index =  mDisplaySceneInfo.layerDataMappingInfo[layer];
-    if (index >= mDisplayColorInterface->Dpp().size()) {
-        DISPLAY_LOGE("%s: invalid dpp index(%d) dpp size(%zu)",
-                __func__, index, mDisplayColorInterface->Dpp().size());
+    auto size = mDisplayColorInterface->GetPipelineData(DisplayType::DISPLAY_PRIMARY)->Dpp().size();
+    if (index >= size) {
+        DISPLAY_LOGE("%s: invalid dpp index(%d) dpp size(%zu)", __func__, index, size);
         return false;
     }
 
@@ -301,7 +301,7 @@ bool ExynosPrimaryDisplayModule::hasDppForLayer(ExynosLayer* layer)
 const IDisplayColorGS101::IDpp& ExynosPrimaryDisplayModule::getDppForLayer(ExynosLayer* layer)
 {
     uint32_t index = mDisplaySceneInfo.layerDataMappingInfo[layer];
-    return mDisplayColorInterface->Dpp()[index].get();
+    return mDisplayColorInterface->GetPipelineData(DisplayType::DISPLAY_PRIMARY)->Dpp()[index].get();
 }
 
 int32_t ExynosPrimaryDisplayModule::getDppIndexForLayer(ExynosLayer* layer)
@@ -512,7 +512,8 @@ int32_t ExynosPrimaryDisplayModule::updateColorConversionInfo()
     if (hwcCheckDebugMessages(eDebugColorManagement))
         mDisplaySceneInfo.printDisplayScene();
 
-    if ((ret = mDisplayColorInterface->Update(mDisplaySceneInfo.displayScene)) != 0) {
+    if ((ret = mDisplayColorInterface->Update(DisplayType::DISPLAY_PRIMARY,
+                                              mDisplaySceneInfo.displayScene)) != 0) {
         DISPLAY_LOGE("Display Scene update error (%d)", ret);
         return ret;
     }
