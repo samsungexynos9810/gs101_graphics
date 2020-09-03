@@ -155,6 +155,39 @@ class IDisplayColorGS101 : public IDisplayColorGeneric {
     /// Interface for accessing data for DQE stages.
     struct IDqe {
      private:
+        /// 32-bit DQE dither register, same definition as in uapi
+        struct DitherConfigType {
+            uint8_t en : 1;
+            uint8_t mode : 1;
+            uint8_t frame_con : 1;
+            uint8_t frame_offset : 2;
+            uint8_t table_sel_r : 1;
+            uint8_t table_sel_g : 1;
+            uint8_t table_sel_b : 1;
+            uint32_t reserved : 24;
+        };
+
+        struct DqeControlConfigType {
+            /// DQE force 10bpc mode
+            bool force_10bpc = false;
+
+            /// flag to use cgc_dither
+            bool cgc_dither_override = false;
+            /// CGC dither register value
+            union {
+                DitherConfigType cgc_dither_reg = {};
+                uint8_t cgc_dither; // only lowest 8 bit is used
+            };
+
+            /// flag to use disp_dither
+            bool disp_dither_override = false;
+            /// Display dither register value
+            union {
+                DitherConfigType disp_dither_reg = {};
+                uint8_t disp_dither; // only lowest 8 bit is used
+            };
+        };
+
         struct DqeMatrixConfigType {
             using Container = uint16_t;
             static constexpr size_t kDimensions = 3;
@@ -194,6 +227,9 @@ class IDisplayColorGS101 : public IDisplayColorGeneric {
         };
 
      public:
+        /// DQE control data
+        using DqeControlData = DisplayStage<DqeControlConfigType>;
+
         /// Register data for the gamma and linear matrices in DQE.
         using DqeMatrixData = DisplayStage<DqeMatrixConfigType>;
 
@@ -205,6 +241,9 @@ class IDisplayColorGS101 : public IDisplayColorGeneric {
 
         /// Register data for the regamma LUT.
         using RegammaLutData = DisplayStage<RegammaConfigType>;
+
+        /// Get DQE control data
+        virtual const DqeControlData& DqeControl() const = 0;
 
         /// Get data for the gamma-space matrix.
         virtual const DqeMatrixData& GammaMatrix() const = 0;
@@ -224,17 +263,26 @@ class IDisplayColorGS101 : public IDisplayColorGeneric {
         virtual ~IDqe() {}
     };
 
-    /**
-     * @brief Get handles to Display Pre-Processor (DPP) data accessors.
-     *
-     * The order of the returned DPP handles match the order of the
-     * LayerColorData provided as part of struct DisplayScene and
-     * IDisplayColorGeneric::Update().
-     */
-    virtual std::vector<std::reference_wrapper<const IDpp>> Dpp() const = 0;
+    /// Interface for accessing particular display color data
+    struct IDisplayPipelineData {
+        /**
+         * @brief Get handles to Display Pre-Processor (DPP) data accessors.
+         *
+         * The order of the returned DPP handles match the order of the
+         * LayerColorData provided as part of struct DisplayScene and
+         * IDisplayColorGeneric::Update().
+         */
+        virtual std::vector<std::reference_wrapper<const IDpp>> Dpp() const = 0;
 
-    /// Get a handle to Display Quality Enhancer (DQE) data accessors.
-    virtual const IDqe& Dqe() const = 0;
+        /// Get a handle to Display Quality Enhancer (DQE) data accessors.
+        virtual const IDqe& Dqe() const = 0;
+
+        virtual ~IDisplayPipelineData() {}
+    };
+
+    /// Get pipeline color data for specified display type
+    virtual const IDisplayPipelineData* GetPipelineData(
+        DisplayType display) const = 0;
 
     virtual ~IDisplayColorGS101() {}
 };
@@ -242,7 +290,7 @@ class IDisplayColorGS101 : public IDisplayColorGeneric {
 extern "C" {
 
 /// Get the GS101 instance.
-IDisplayColorGS101* GetDisplayColorGS101();
+IDisplayColorGS101* GetDisplayColorGS101(size_t display_num);
 
 }
 
