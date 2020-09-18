@@ -51,6 +51,21 @@ ExynosDisplayDrmInterfaceModule::~ExynosDisplayDrmInterfaceModule()
 {
 }
 
+void ExynosDisplayDrmInterfaceModule::parseBpcEnums(const DrmProperty& property)
+{
+    const std::vector<std::pair<uint32_t, const char *>> bpcEnums = {
+        {static_cast<uint32_t>(BPC_UNSPECIFIED), "Unspecified"},
+        {static_cast<uint32_t>(BPC_8), "8bpc"},
+        {static_cast<uint32_t>(BPC_10), "10bpc"},
+    };
+
+    ALOGD("Init bpc enums");
+    parseEnums(property, bpcEnums, mBpcEnums);
+    for (auto &e : mBpcEnums) {
+        ALOGD("bpc [bpc: %d, drm: %" PRId64 "]", e.first, e.second);
+    }
+}
+
 void ExynosDisplayDrmInterfaceModule::initDrmDevice(DrmDevice *drmDevice)
 {
     ExynosDisplayDrmInterface::initDrmDevice(drmDevice);
@@ -64,6 +79,8 @@ void ExynosDisplayDrmInterfaceModule::initDrmDevice(DrmDevice *drmDevice)
         (ExynosPrimaryDisplayModule*)mExynosDisplay;
     size_t dppSize = display->getNumOfDpp();
     resizeOldDppBlobs(dppSize);
+    if (mDrmCrtc->force_bpc_property().id())
+        parseBpcEnums(mDrmCrtc->force_bpc_property());
 }
 
 void ExynosDisplayDrmInterfaceModule::destroyOldBlobs(
@@ -218,6 +235,45 @@ int32_t ExynosDisplayDrmInterfaceModule::createLinearMatBlobFromIDqe(
         return ret;
     }
 
+    return NO_ERROR;
+}
+
+int32_t ExynosDisplayDrmInterfaceModule::createDispDitherBlobFromIDqe(
+        const IDisplayColorGS101::IDqe &dqe, uint32_t &blobId)
+{
+    int ret = 0;
+    const IDisplayColorGS101::IDqe::DqeControlData& dqeControl = dqe.DqeControl();
+    if (dqeControl.config->disp_dither_override == false) {
+        blobId = 0;
+        return ret;
+    }
+
+    ret = mDrmDevice->CreatePropertyBlob((void*)&dqeControl.config->disp_dither_reg,
+            sizeof(dqeControl.config->disp_dither_reg), &blobId);
+    if (ret) {
+        HWC_LOGE(mExynosDisplay, "Failed to create disp dither blob %d", ret);
+        return ret;
+    }
+
+    return NO_ERROR;
+}
+
+int32_t ExynosDisplayDrmInterfaceModule::createCgcDitherBlobFromIDqe(
+        const IDisplayColorGS101::IDqe &dqe, uint32_t &blobId)
+{
+    int ret = 0;
+    const IDisplayColorGS101::IDqe::DqeControlData& dqeControl = dqe.DqeControl();
+    if (dqeControl.config->cgc_dither_override == false) {
+        blobId = 0;
+        return ret;
+    }
+
+    ret = mDrmDevice->CreatePropertyBlob((void*)&dqeControl.config->cgc_dither_reg,
+            sizeof(dqeControl.config->cgc_dither_reg), &blobId);
+    if (ret) {
+        HWC_LOGE(mExynosDisplay, "Failed to create disp dither blob %d", ret);
+        return ret;
+    }
     return NO_ERROR;
 }
 
@@ -376,6 +432,12 @@ int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorBlob(
                 case DqeBlobs::LINEAR_MAT:
                     ret = createLinearMatBlobFromIDqe(dqe, blobId);
                     break;
+                case DqeBlobs::DISP_DITHER:
+                    ret = createDispDitherBlobFromIDqe(dqe, blobId);
+                    break;
+                case DqeBlobs::CGC_DITHER:
+                    ret = createCgcDitherBlobFromIDqe(dqe, blobId);
+                    break;
                 default:
                     ret = -EINVAL;
             }
@@ -383,7 +445,8 @@ int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorBlob(
                 HWC_LOGE(mExynosDisplay, "%s: create blob fail", __func__);
                 return ret;
             }
-            mOldDqeBlobs.addBlob(type, blobId);
+            if (blobId != 0)
+                mOldDqeBlobs.addBlob(type, blobId);
         } else {
             blobId = mOldDqeBlobs.getBlob(type);
         }
@@ -437,6 +500,38 @@ int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
                 dqe.LinearMatrix(), dqe, drmReq) != NO_ERROR)) {
         HWC_LOGE(mExynosDisplay, "%s: set LinearMatrix blob fail", __func__);
         return ret;
+    }
+    if ((ret = setDisplayColorBlob(mDrmCrtc->disp_dither_property(),
+                static_cast<uint32_t>(DqeBlobs::DISP_DITHER),
+                dqe.DqeControl(), dqe, drmReq) != NO_ERROR)) {
+        HWC_LOGE(mExynosDisplay, "%s: set DispDither blob fail", __func__);
+        return ret;
+    }
+    if ((ret = setDisplayColorBlob(mDrmCrtc->cgc_dither_property(),
+                static_cast<uint32_t>(DqeBlobs::CGC_DITHER),
+                dqe.DqeControl(), dqe, drmReq) != NO_ERROR)) {
+        HWC_LOGE(mExynosDisplay, "%s: set CgcDither blob fail", __func__);
+        return ret;
+    }
+
+    const DrmProperty &prop_force_bpc = mDrmCrtc->force_bpc_property();
+    if (prop_force_bpc.id()) {
+        uint32_t bpc = static_cast<uint32_t>(BPC_UNSPECIFIED);
+        if (dqe.DqeControl().enable) {
+            if (dqe.DqeControl().config->force_10bpc)
+                bpc = static_cast<uint32_t>(BPC_10);
+        }
+        uint64_t bpcEnum = 0;
+        std::tie(bpcEnum, ret) = halToDrmEnum(bpc, mBpcEnums);
+        if (ret < 0) {
+            HWC_LOGE(mExynosDisplay, "Fail to convert bpc(%d)", bpc);
+        } else {
+            if ((ret = drmReq.atomicAddProperty(mDrmCrtc->id(), prop_force_bpc,
+                            bpcEnum, true)) < 0) {
+                HWC_LOGE(mExynosDisplay, "%s: Fail to set force bpc property",
+                        __func__);
+            }
+        }
     }
 
     return NO_ERROR;
