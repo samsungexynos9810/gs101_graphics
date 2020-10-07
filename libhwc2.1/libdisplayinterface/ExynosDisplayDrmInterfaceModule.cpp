@@ -409,53 +409,56 @@ int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorBlob(
         const IDisplayColorGS101::IDqe &dqe,
         ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq)
 {
-    if (!prop.id())
+    /* dirty bit is valid only if enable is true */
+    if (!prop.id() || (stage.enable && !stage.dirty))
         return NO_ERROR;
 
     int32_t ret = 0;
     uint32_t blobId = 0;
+
     if (stage.enable) {
-        if (stage.dirty) {
-            switch (type) {
-                case DqeBlobs::CGC:
-                    ret = createCgcBlobFromIDqe(dqe, blobId);
-                    break;
-                case DqeBlobs::DEGAMMA_LUT:
-                    ret = createDegammaLutBlobFromIDqe(dqe, blobId);
-                    break;
-                case DqeBlobs::REGAMMA_LUT:
-                    ret = createRegammaLutBlobFromIDqe(dqe, blobId);
-                    break;
-                case DqeBlobs::GAMMA_MAT:
-                    ret = createGammaMatBlobFromIDqe(dqe, blobId);
-                    break;
-                case DqeBlobs::LINEAR_MAT:
-                    ret = createLinearMatBlobFromIDqe(dqe, blobId);
-                    break;
-                case DqeBlobs::DISP_DITHER:
-                    ret = createDispDitherBlobFromIDqe(dqe, blobId);
-                    break;
-                case DqeBlobs::CGC_DITHER:
-                    ret = createCgcDitherBlobFromIDqe(dqe, blobId);
-                    break;
-                default:
-                    ret = -EINVAL;
-            }
-            if (ret != NO_ERROR) {
-                HWC_LOGE(mExynosDisplay, "%s: create blob fail", __func__);
-                return ret;
-            }
-            if (blobId != 0)
-                mOldDqeBlobs.addBlob(type, blobId);
-        } else {
-            blobId = mOldDqeBlobs.getBlob(type);
+        switch (type) {
+            case DqeBlobs::CGC:
+                ret = createCgcBlobFromIDqe(dqe, blobId);
+                break;
+            case DqeBlobs::DEGAMMA_LUT:
+                ret = createDegammaLutBlobFromIDqe(dqe, blobId);
+                break;
+            case DqeBlobs::REGAMMA_LUT:
+                ret = createRegammaLutBlobFromIDqe(dqe, blobId);
+                break;
+            case DqeBlobs::GAMMA_MAT:
+                ret = createGammaMatBlobFromIDqe(dqe, blobId);
+                break;
+            case DqeBlobs::LINEAR_MAT:
+                ret = createLinearMatBlobFromIDqe(dqe, blobId);
+                break;
+            case DqeBlobs::DISP_DITHER:
+                ret = createDispDitherBlobFromIDqe(dqe, blobId);
+                break;
+            case DqeBlobs::CGC_DITHER:
+                ret = createCgcDitherBlobFromIDqe(dqe, blobId);
+                break;
+            default:
+                ret = -EINVAL;
+        }
+        if (ret != NO_ERROR) {
+            HWC_LOGE(mExynosDisplay, "%s: create blob fail", __func__);
+            return ret;
         }
     }
+
+    /* Skip setting when previous and current setting is same with 0 */
+    if ((blobId == 0) && (mOldDqeBlobs.getBlob(type) == 0))
+        return ret;
+
     if ((ret = drmReq.atomicAddProperty(mDrmCrtc->id(), prop, blobId)) < 0) {
         HWC_LOGE(mExynosDisplay, "%s: Fail to set property",
                 __func__);
         return ret;
     }
+    mOldDqeBlobs.addBlob(type, blobId);
+
     return ret;
 }
 int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
@@ -547,7 +550,8 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorBlob(
         const uint32_t dppIndex,
         ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq)
 {
-    if (!prop.id())
+    /* dirty bit is valid only if enable is true */
+    if (!prop.id() || (stage.enable && !stage.dirty))
         return NO_ERROR;
 
     if (dppIndex >= mOldDppBlobs.size()) {
@@ -560,37 +564,39 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorBlob(
     uint32_t blobId = 0;
 
     if (stage.enable) {
-        if (stage.dirty) {
-            switch (type) {
-                case DppBlobs::EOTF:
-                    ret = createEotfBlobFromIDpp(dpp, blobId);
-                    break;
-                case DppBlobs::GM:
-                    ret = createGmBlobFromIDpp(dpp, blobId);
-                    break;
-                case DppBlobs::DTM:
-                    ret = createDtmBlobFromIDpp(dpp, blobId);
-                    break;
-                case DppBlobs::OETF:
-                    ret = createOetfBlobFromIDpp(dpp, blobId);
-                    break;
-                default:
-                    ret = -EINVAL;
-            }
-            if (ret != NO_ERROR) {
-                HWC_LOGE(mExynosDisplay, "%s: create blob fail", __func__);
-                return ret;
-            }
-            oldDppBlobs.addBlob(type, blobId);
-        } else {
-            blobId = oldDppBlobs.getBlob(type);
+        switch (type) {
+            case DppBlobs::EOTF:
+                ret = createEotfBlobFromIDpp(dpp, blobId);
+                break;
+            case DppBlobs::GM:
+                ret = createGmBlobFromIDpp(dpp, blobId);
+                break;
+            case DppBlobs::DTM:
+                ret = createDtmBlobFromIDpp(dpp, blobId);
+                break;
+            case DppBlobs::OETF:
+                ret = createOetfBlobFromIDpp(dpp, blobId);
+                break;
+            default:
+                ret = -EINVAL;
+        }
+        if (ret != NO_ERROR) {
+            HWC_LOGE(mExynosDisplay, "%s: create blob fail", __func__);
+            return ret;
         }
     }
+
+    /* Skip setting when previous and current setting is same with 0 */
+    if ((blobId == 0) && (oldDppBlobs.getBlob(type) == 0))
+        return ret;
+
     if ((ret = drmReq.atomicAddProperty(plane->id(), prop, blobId)) < 0) {
         HWC_LOGE(mExynosDisplay, "%s: Fail to set property",
                 __func__);
         return ret;
     }
+
+    oldDppBlobs.addBlob(type, blobId);
 
     return ret;
 }
