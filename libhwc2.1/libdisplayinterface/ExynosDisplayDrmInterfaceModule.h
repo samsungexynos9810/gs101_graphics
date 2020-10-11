@@ -27,6 +27,7 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
     public:
         ExynosDisplayDrmInterfaceModule(ExynosDisplay *exynosDisplay);
         virtual ~ExynosDisplayDrmInterfaceModule();
+        virtual void initDrmDevice(DrmDevice *drmDevice);
 
         virtual int32_t setDisplayColorSetting(
                 ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq);
@@ -58,6 +59,71 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
         int32_t createOetfBlobFromIDpp(const IDisplayColorGS101::IDpp &dpp,
                 uint32_t &blobId);
     private:
+        class SaveBlob {
+            public:
+                ~SaveBlob();
+                void init(DrmDevice *drmDevice, uint32_t size) {
+                    mDrmDevice = drmDevice;
+                    blobs.resize(size, 0);
+                };
+                void addBlob(uint32_t type, uint32_t blob);
+                uint32_t getBlob(uint32_t type);
+            private:
+                DrmDevice *mDrmDevice = NULL;
+                std::vector<uint32_t> blobs;
+        };
+        class DqeBlobs:public SaveBlob {
+            public:
+                enum Dqe_Blob_Type{
+                    CGC,
+                    DEGAMMA_LUT,
+                    REGAMMA_LUT,
+                    GAMMA_MAT,
+                    LINEAR_MAT,
+                    DQE_BLOB_NUM // number of DQE blobs
+                };
+                void init(DrmDevice *drmDevice) {
+                    SaveBlob::init(drmDevice, DQE_BLOB_NUM);
+                };
+        };
+        class DppBlobs:public SaveBlob {
+            public:
+                enum Dpp_Blob_Type{
+                    EOTF,
+                    GM,
+                    DTM,
+                    OETF,
+                    DPP_BLOB_NUM // number of DPP blobs
+                };
+                void init(DrmDevice *drmDevice) {
+                    SaveBlob::init(drmDevice, DPP_BLOB_NUM);
+                };
+        };
+        int32_t setDisplayColorBlob(
+                const DrmProperty &prop,
+                const uint32_t type,
+                const IDisplayColorGeneric::DisplayStage &stage,
+                const IDisplayColorGS101::IDqe &dqe,
+                ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq);
+        int32_t setPlaneColorBlob(
+                const std::unique_ptr<DrmPlane> &plane,
+                const DrmProperty &prop,
+                const uint32_t type,
+                const IDisplayColorGeneric::DisplayStage &stage,
+                const IDisplayColorGS101::IDpp &dpp,
+                const uint32_t dppIndex,
+                ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq);
+        DqeBlobs mOldDqeBlobs;
+        std::vector<DppBlobs> mOldDppBlobs;
+        void resizeOldDppBlobs(uint32_t size) {
+            size_t prevSize = mOldDppBlobs.size();
+            if (prevSize == size)
+                return;
+            mOldDppBlobs.resize(size);
+            for (uint32_t i = prevSize; i < size; i++) {
+                mOldDppBlobs[i].init(mDrmDevice);
+            }
+        };
         bool mColorSettingChanged = false;
 };
 
