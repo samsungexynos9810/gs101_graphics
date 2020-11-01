@@ -19,10 +19,8 @@
 #include <drm/samsung_drm.h>
 
 template <typename T, typename M>
-int32_t convertDqeMatrixDataToMatrix(
-        const IDisplayColorGS101::MatrixData<T> &colorMatrix,
-        M &mat, uint32_t dimension)
-{
+int32_t convertDqeMatrixDataToMatrix(T &colorMatrix, M &mat,
+                                     uint32_t dimension) {
     if (colorMatrix.coeffs.size() != (dimension * dimension)) {
         HWC_LOGE(nullptr, "Invalid coeff size(%zu)",
                 colorMatrix.coeffs.size());
@@ -53,6 +51,21 @@ ExynosDisplayDrmInterfaceModule::~ExynosDisplayDrmInterfaceModule()
 {
 }
 
+void ExynosDisplayDrmInterfaceModule::parseBpcEnums(const DrmProperty& property)
+{
+    const std::vector<std::pair<uint32_t, const char *>> bpcEnums = {
+        {static_cast<uint32_t>(BPC_UNSPECIFIED), "Unspecified"},
+        {static_cast<uint32_t>(BPC_8), "8bpc"},
+        {static_cast<uint32_t>(BPC_10), "10bpc"},
+    };
+
+    ALOGD("Init bpc enums");
+    parseEnums(property, bpcEnums, mBpcEnums);
+    for (auto &e : mBpcEnums) {
+        ALOGD("bpc [bpc: %d, drm: %" PRId64 "]", e.first, e.second);
+    }
+}
+
 void ExynosDisplayDrmInterfaceModule::initDrmDevice(DrmDevice *drmDevice)
 {
     ExynosDisplayDrmInterface::initDrmDevice(drmDevice);
@@ -66,6 +79,8 @@ void ExynosDisplayDrmInterfaceModule::initDrmDevice(DrmDevice *drmDevice)
         (ExynosPrimaryDisplayModule*)mExynosDisplay;
     size_t dppSize = display->getNumOfDpp();
     resizeOldDppBlobs(dppSize);
+    if (mDrmCrtc->force_bpc_property().id())
+        parseBpcEnums(mDrmCrtc->force_bpc_property());
 }
 
 void ExynosDisplayDrmInterfaceModule::destroyOldBlobs(
@@ -82,19 +97,26 @@ int32_t ExynosDisplayDrmInterfaceModule::createCgcBlobFromIDqe(
 {
     struct cgc_lut cgc;
     const IDisplayColorGS101::IDqe::CgcData &cgcData = dqe.Cgc();
-    if ((cgcData.r_values.size() != DRM_SAMSUNG_CGC_LUT_REG_CNT) ||
-        (cgcData.g_values.size() != DRM_SAMSUNG_CGC_LUT_REG_CNT) ||
-        (cgcData.b_values.size() != DRM_SAMSUNG_CGC_LUT_REG_CNT)) {
+
+    if (cgcData.config == nullptr) {
+        ALOGE("no CGC config");
+        return -EINVAL;
+    }
+
+    if ((cgcData.config->r_values.size() != DRM_SAMSUNG_CGC_LUT_REG_CNT) ||
+        (cgcData.config->g_values.size() != DRM_SAMSUNG_CGC_LUT_REG_CNT) ||
+        (cgcData.config->b_values.size() != DRM_SAMSUNG_CGC_LUT_REG_CNT)) {
         ALOGE("CGC data size is not same (r: %zu, g: %zu: b: %zu)",
-                cgcData.r_values.size(), cgcData.g_values.size(),
-                cgcData.b_values.size());
+                cgcData.config->r_values.size(),
+                cgcData.config->g_values.size(),
+                cgcData.config->b_values.size());
         return -EINVAL;
     }
 
     for (uint32_t i = 0; i < DRM_SAMSUNG_CGC_LUT_REG_CNT; i++) {
-        cgc.r_values[i] = cgcData.r_values[i];
-        cgc.g_values[i] = cgcData.g_values[i];
-        cgc.b_values[i] = cgcData.b_values[i];
+        cgc.r_values[i] = cgcData.config->r_values[i];
+        cgc.g_values[i] = cgcData.config->g_values[i];
+        cgc.b_values[i] = cgcData.config->b_values[i];
     }
     int ret = mDrmDevice->CreatePropertyBlob(&cgc, sizeof(cgc_lut), &blobId);
     if (ret) {
@@ -109,21 +131,27 @@ int32_t ExynosDisplayDrmInterfaceModule::createDegammaLutBlobFromIDqe(
 {
     int ret = 0;
     uint64_t lut_size = 0;
+
+    if (dqe.DegammaLut().config == nullptr) {
+        ALOGE("no degamma config");
+        return -EINVAL;
+    }
+
     std::tie(ret, lut_size) = mDrmCrtc->degamma_lut_size_property().value();
     if (ret < 0) {
          HWC_LOGE(mExynosDisplay, "%s: there is no degamma_lut_size (ret = %d)",
                  __func__, ret);
          return ret;
     }
-    if (lut_size != IDisplayColorGS101::IDqe::DegammaLutData::kLutLen) {
+    if (lut_size != IDisplayColorGS101::IDqe::DegammaLutData::ConfigType::kLutLen) {
         HWC_LOGE(mExynosDisplay, "%s: invalid lut size (%" PRId64 ")",
                 __func__, lut_size);
         return -EINVAL;
     }
 
-    struct drm_color_lut color_lut[IDisplayColorGS101::IDqe::DegammaLutData::kLutLen];
+    struct drm_color_lut color_lut[IDisplayColorGS101::IDqe::DegammaLutData::ConfigType::kLutLen];
     for (uint32_t i = 0; i < lut_size; i++) {
-        color_lut[i].red = dqe.DegammaLut().values[i];
+        color_lut[i].red = dqe.DegammaLut().config->values[i];
     }
     ret = mDrmDevice->CreatePropertyBlob(color_lut, sizeof(color_lut), &blobId);
     if (ret) {
@@ -138,23 +166,29 @@ int32_t ExynosDisplayDrmInterfaceModule::createRegammaLutBlobFromIDqe(
 {
     int ret = 0;
     uint64_t lut_size = 0;
+
+    if (dqe.RegammaLut().config == nullptr) {
+        ALOGE("no regamma config");
+        return -EINVAL;
+    }
+
     std::tie(ret, lut_size) = mDrmCrtc->gamma_lut_size_property().value();
     if (ret < 0) {
          HWC_LOGE(mExynosDisplay, "%s: there is no gamma_lut_size (ret = %d)",
                  __func__, ret);
          return ret;
     }
-    if (lut_size != IDisplayColorGS101::IDqe::DegammaLutData::kLutLen) {
+    if (lut_size != IDisplayColorGS101::IDqe::DegammaLutData::ConfigType::kLutLen) {
         HWC_LOGE(mExynosDisplay, "%s: invalid lut size (%" PRId64 ")",
                 __func__, lut_size);
         return -EINVAL;
     }
 
-    struct drm_color_lut color_lut[IDisplayColorGS101::IDqe::DegammaLutData::kLutLen];
+    struct drm_color_lut color_lut[IDisplayColorGS101::IDqe::DegammaLutData::ConfigType::kLutLen];
     for (uint32_t i = 0; i < lut_size; i++) {
-        color_lut[i].red = dqe.RegammaLut().r_values[i];
-        color_lut[i].green = dqe.RegammaLut().g_values[i];
-        color_lut[i].blue = dqe.RegammaLut().b_values[i];
+        color_lut[i].red = dqe.RegammaLut().config->r_values[i];
+        color_lut[i].green = dqe.RegammaLut().config->g_values[i];
+        color_lut[i].blue = dqe.RegammaLut().config->b_values[i];
     }
     ret = mDrmDevice->CreatePropertyBlob(color_lut, sizeof(color_lut), &blobId);
     if (ret) {
@@ -170,7 +204,7 @@ int32_t ExynosDisplayDrmInterfaceModule::createGammaMatBlobFromIDqe(
     int ret = 0;
     struct exynos_matrix gamma_matrix;
     if ((ret = convertDqeMatrixDataToMatrix(
-                    dqe.GammaMatrix(), gamma_matrix, DRM_SAMSUNG_MATRIX_DIMENS)) != NO_ERROR)
+                    dqe.GammaMatrix().config->matrix_data, gamma_matrix, DRM_SAMSUNG_MATRIX_DIMENS)) != NO_ERROR)
     {
         HWC_LOGE(mExynosDisplay, "Failed to convert gamma matrix");
         return ret;
@@ -190,7 +224,7 @@ int32_t ExynosDisplayDrmInterfaceModule::createLinearMatBlobFromIDqe(
     int ret = 0;
     struct exynos_matrix linear_matrix;
     if ((ret = convertDqeMatrixDataToMatrix(
-                    dqe.LinearMatrix(), linear_matrix, DRM_SAMSUNG_MATRIX_DIMENS)) != NO_ERROR)
+                    dqe.LinearMatrix().config->matrix_data, linear_matrix, DRM_SAMSUNG_MATRIX_DIMENS)) != NO_ERROR)
     {
         HWC_LOGE(mExynosDisplay, "Failed to convert linear matrix");
         return ret;
@@ -204,19 +238,66 @@ int32_t ExynosDisplayDrmInterfaceModule::createLinearMatBlobFromIDqe(
     return NO_ERROR;
 }
 
+int32_t ExynosDisplayDrmInterfaceModule::createDispDitherBlobFromIDqe(
+        const IDisplayColorGS101::IDqe &dqe, uint32_t &blobId)
+{
+    int ret = 0;
+    const IDisplayColorGS101::IDqe::DqeControlData& dqeControl = dqe.DqeControl();
+    if (dqeControl.config->disp_dither_override == false) {
+        blobId = 0;
+        return ret;
+    }
+
+    ret = mDrmDevice->CreatePropertyBlob((void*)&dqeControl.config->disp_dither_reg,
+            sizeof(dqeControl.config->disp_dither_reg), &blobId);
+    if (ret) {
+        HWC_LOGE(mExynosDisplay, "Failed to create disp dither blob %d", ret);
+        return ret;
+    }
+
+    return NO_ERROR;
+}
+
+int32_t ExynosDisplayDrmInterfaceModule::createCgcDitherBlobFromIDqe(
+        const IDisplayColorGS101::IDqe &dqe, uint32_t &blobId)
+{
+    int ret = 0;
+    const IDisplayColorGS101::IDqe::DqeControlData& dqeControl = dqe.DqeControl();
+    if (dqeControl.config->cgc_dither_override == false) {
+        blobId = 0;
+        return ret;
+    }
+
+    ret = mDrmDevice->CreatePropertyBlob((void*)&dqeControl.config->cgc_dither_reg,
+            sizeof(dqeControl.config->cgc_dither_reg), &blobId);
+    if (ret) {
+        HWC_LOGE(mExynosDisplay, "Failed to create disp dither blob %d", ret);
+        return ret;
+    }
+    return NO_ERROR;
+}
+
 int32_t ExynosDisplayDrmInterfaceModule::createEotfBlobFromIDpp(
         const IDisplayColorGS101::IDpp &dpp, uint32_t &blobId)
 {
     struct hdr_eotf_lut eotf_lut;
-    if ((dpp.EotfLut().posx.size() != DRM_SAMSUNG_HDR_EOTF_LUT_LEN) ||
-        (dpp.EotfLut().posy.size() != DRM_SAMSUNG_HDR_EOTF_LUT_LEN)) {
-        HWC_LOGE(mExynosDisplay, "%s: eotf pos size (%zu, %zu)",
-                __func__, dpp.EotfLut().posx.size(), dpp.EotfLut().posy.size());
+
+    if (dpp.EotfLut().config == nullptr) {
+        ALOGE("no dpp eotf config");
         return -EINVAL;
     }
+
+    if ((dpp.EotfLut().config->tf_data.posx.size() != DRM_SAMSUNG_HDR_EOTF_LUT_LEN) ||
+        (dpp.EotfLut().config->tf_data.posy.size() != DRM_SAMSUNG_HDR_EOTF_LUT_LEN)) {
+        HWC_LOGE(mExynosDisplay, "%s: eotf pos size (%zu, %zu)",
+                __func__, dpp.EotfLut().config->tf_data.posx.size(),
+                dpp.EotfLut().config->tf_data.posy.size());
+        return -EINVAL;
+    }
+
     for (uint32_t i = 0; i < DRM_SAMSUNG_HDR_EOTF_LUT_LEN; i++) {
-        eotf_lut.posx[i] = dpp.EotfLut().posx[i];
-        eotf_lut.posy[i] = dpp.EotfLut().posy[i];
+        eotf_lut.posx[i] = dpp.EotfLut().config->tf_data.posx[i];
+        eotf_lut.posy[i] = dpp.EotfLut().config->tf_data.posy[i];
     }
     int ret = mDrmDevice->CreatePropertyBlob(&eotf_lut, sizeof(eotf_lut), &blobId);
     if (ret) {
@@ -231,8 +312,14 @@ int32_t ExynosDisplayDrmInterfaceModule::createGmBlobFromIDpp(
 {
     int ret = 0;
     struct hdr_gm_data gm_matrix;
-    if ((ret = convertDqeMatrixDataToMatrix(
-                    dpp.Gm(), gm_matrix, DRM_SAMSUNG_HDR_GM_DIMENS)) != NO_ERROR)
+
+    if (dpp.Gm().config == nullptr) {
+        ALOGE("no dpp GM config");
+        return -EINVAL;
+    }
+
+    if ((ret = convertDqeMatrixDataToMatrix(dpp.Gm().config->matrix_data, gm_matrix,
+                                            DRM_SAMSUNG_HDR_GM_DIMENS)) != NO_ERROR)
     {
         HWC_LOGE(mExynosDisplay, "Failed to convert gm matrix");
         return ret;
@@ -249,25 +336,32 @@ int32_t ExynosDisplayDrmInterfaceModule::createDtmBlobFromIDpp(
         const IDisplayColorGS101::IDpp &dpp, uint32_t &blobId)
 {
     struct hdr_tm_data tm_data;
-    if ((dpp.Dtm().posx.size() != DRM_SAMSUNG_HDR_TM_LUT_LEN) ||
-        (dpp.Dtm().posy.size() != DRM_SAMSUNG_HDR_TM_LUT_LEN)) {
+
+    if (dpp.Dtm().config == nullptr) {
+        ALOGE("no dpp DTM config");
+        return -EINVAL;
+    }
+
+    if ((dpp.Dtm().config->tf_data.posx.size() != DRM_SAMSUNG_HDR_TM_LUT_LEN) ||
+        (dpp.Dtm().config->tf_data.posy.size() != DRM_SAMSUNG_HDR_TM_LUT_LEN)) {
         HWC_LOGE(mExynosDisplay, "%s: dtm pos size (%zu, %zu)",
-                __func__, dpp.Dtm().posx.size(), dpp.Dtm().posy.size());
+                __func__, dpp.Dtm().config->tf_data.posx.size(),
+                dpp.Dtm().config->tf_data.posy.size());
         return -EINVAL;
     }
 
     for (uint32_t i = 0; i < DRM_SAMSUNG_HDR_TM_LUT_LEN; i++) {
-        tm_data.posx[i] = dpp.Dtm().posx[i];
-        tm_data.posy[i] = dpp.Dtm().posy[i];
+        tm_data.posx[i] = dpp.Dtm().config->tf_data.posx[i];
+        tm_data.posy[i] = dpp.Dtm().config->tf_data.posy[i];
     }
 
-    tm_data.coeff_r = dpp.Dtm().coeff_r;
-    tm_data.coeff_g = dpp.Dtm().coeff_g;
-    tm_data.coeff_b = dpp.Dtm().coeff_b;
-    tm_data.rng_x_min = dpp.Dtm().rng_x_min;
-    tm_data.rng_x_max = dpp.Dtm().rng_x_max;
-    tm_data.rng_y_min = dpp.Dtm().rng_y_min;
-    tm_data.rng_y_max = dpp.Dtm().rng_y_max;
+    tm_data.coeff_r = dpp.Dtm().config->coeff_r;
+    tm_data.coeff_g = dpp.Dtm().config->coeff_g;
+    tm_data.coeff_b = dpp.Dtm().config->coeff_b;
+    tm_data.rng_x_min = dpp.Dtm().config->rng_x_min;
+    tm_data.rng_x_max = dpp.Dtm().config->rng_x_max;
+    tm_data.rng_y_min = dpp.Dtm().config->rng_y_min;
+    tm_data.rng_y_max = dpp.Dtm().config->rng_y_max;
 
     int ret = mDrmDevice->CreatePropertyBlob(&tm_data, sizeof(tm_data), &blobId);
     if (ret) {
@@ -281,15 +375,23 @@ int32_t ExynosDisplayDrmInterfaceModule::createOetfBlobFromIDpp(
         const IDisplayColorGS101::IDpp &dpp, uint32_t &blobId)
 {
     struct hdr_oetf_lut oetf_lut;
-    if ((dpp.OetfLut().posx.size() != DRM_SAMSUNG_HDR_OETF_LUT_LEN) ||
-        (dpp.OetfLut().posy.size() != DRM_SAMSUNG_HDR_OETF_LUT_LEN)) {
-        HWC_LOGE(mExynosDisplay, "%s: oetf pos size (%zu, %zu)",
-                __func__, dpp.OetfLut().posx.size(), dpp.OetfLut().posy.size());
+
+    if (dpp.OetfLut().config == nullptr) {
+        ALOGE("no dpp OETF config");
         return -EINVAL;
     }
+
+    if ((dpp.OetfLut().config->tf_data.posx.size() != DRM_SAMSUNG_HDR_OETF_LUT_LEN) ||
+        (dpp.OetfLut().config->tf_data.posy.size() != DRM_SAMSUNG_HDR_OETF_LUT_LEN)) {
+        HWC_LOGE(mExynosDisplay, "%s: oetf pos size (%zu, %zu)",
+                __func__, dpp.OetfLut().config->tf_data.posx.size(),
+                dpp.OetfLut().config->tf_data.posy.size());
+        return -EINVAL;
+    }
+
     for (uint32_t i = 0; i < DRM_SAMSUNG_HDR_OETF_LUT_LEN; i++) {
-        oetf_lut.posx[i] = dpp.OetfLut().posx[i];
-        oetf_lut.posy[i] = dpp.OetfLut().posy[i];
+        oetf_lut.posx[i] = dpp.OetfLut().config->tf_data.posx[i];
+        oetf_lut.posy[i] = dpp.OetfLut().config->tf_data.posy[i];
     }
     int ret = mDrmDevice->CreatePropertyBlob(&oetf_lut, sizeof(oetf_lut), &blobId);
     if (ret) {
@@ -299,53 +401,64 @@ int32_t ExynosDisplayDrmInterfaceModule::createOetfBlobFromIDpp(
     return NO_ERROR;
 }
 
+template<typename StageDataType>
 int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorBlob(
         const DrmProperty &prop,
         const uint32_t type,
-        const IDisplayColorGeneric::DisplayStage &stage,
+        const StageDataType &stage,
         const IDisplayColorGS101::IDqe &dqe,
         ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq)
 {
-    if (!prop.id())
+    /* dirty bit is valid only if enable is true */
+    if (!prop.id() || (stage.enable && !stage.dirty))
         return NO_ERROR;
 
     int32_t ret = 0;
     uint32_t blobId = 0;
+
     if (stage.enable) {
-        if (stage.dirty) {
-            switch (type) {
-                case DqeBlobs::CGC:
-                    ret = createCgcBlobFromIDqe(dqe, blobId);
-                    break;
-                case DqeBlobs::DEGAMMA_LUT:
-                    ret = createDegammaLutBlobFromIDqe(dqe, blobId);
-                    break;
-                case DqeBlobs::REGAMMA_LUT:
-                    ret = createRegammaLutBlobFromIDqe(dqe, blobId);
-                    break;
-                case DqeBlobs::GAMMA_MAT:
-                    ret = createGammaMatBlobFromIDqe(dqe, blobId);
-                    break;
-                case DqeBlobs::LINEAR_MAT:
-                    ret = createLinearMatBlobFromIDqe(dqe, blobId);
-                    break;
-                default:
-                    ret = -EINVAL;
-            }
-            if (ret != NO_ERROR) {
-                HWC_LOGE(mExynosDisplay, "%s: create blob fail", __func__);
-                return ret;
-            }
-            mOldDqeBlobs.addBlob(type, blobId);
-        } else {
-            blobId = mOldDqeBlobs.getBlob(type);
+        switch (type) {
+            case DqeBlobs::CGC:
+                ret = createCgcBlobFromIDqe(dqe, blobId);
+                break;
+            case DqeBlobs::DEGAMMA_LUT:
+                ret = createDegammaLutBlobFromIDqe(dqe, blobId);
+                break;
+            case DqeBlobs::REGAMMA_LUT:
+                ret = createRegammaLutBlobFromIDqe(dqe, blobId);
+                break;
+            case DqeBlobs::GAMMA_MAT:
+                ret = createGammaMatBlobFromIDqe(dqe, blobId);
+                break;
+            case DqeBlobs::LINEAR_MAT:
+                ret = createLinearMatBlobFromIDqe(dqe, blobId);
+                break;
+            case DqeBlobs::DISP_DITHER:
+                ret = createDispDitherBlobFromIDqe(dqe, blobId);
+                break;
+            case DqeBlobs::CGC_DITHER:
+                ret = createCgcDitherBlobFromIDqe(dqe, blobId);
+                break;
+            default:
+                ret = -EINVAL;
+        }
+        if (ret != NO_ERROR) {
+            HWC_LOGE(mExynosDisplay, "%s: create blob fail", __func__);
+            return ret;
         }
     }
+
+    /* Skip setting when previous and current setting is same with 0 */
+    if ((blobId == 0) && (mOldDqeBlobs.getBlob(type) == 0))
+        return ret;
+
     if ((ret = drmReq.atomicAddProperty(mDrmCrtc->id(), prop, blobId)) < 0) {
         HWC_LOGE(mExynosDisplay, "%s: Fail to set property",
                 __func__);
         return ret;
     }
+    mOldDqeBlobs.addBlob(type, blobId);
+
     return ret;
 }
 int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
@@ -391,20 +504,54 @@ int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
         HWC_LOGE(mExynosDisplay, "%s: set LinearMatrix blob fail", __func__);
         return ret;
     }
+    if ((ret = setDisplayColorBlob(mDrmCrtc->disp_dither_property(),
+                static_cast<uint32_t>(DqeBlobs::DISP_DITHER),
+                dqe.DqeControl(), dqe, drmReq) != NO_ERROR)) {
+        HWC_LOGE(mExynosDisplay, "%s: set DispDither blob fail", __func__);
+        return ret;
+    }
+    if ((ret = setDisplayColorBlob(mDrmCrtc->cgc_dither_property(),
+                static_cast<uint32_t>(DqeBlobs::CGC_DITHER),
+                dqe.DqeControl(), dqe, drmReq) != NO_ERROR)) {
+        HWC_LOGE(mExynosDisplay, "%s: set CgcDither blob fail", __func__);
+        return ret;
+    }
+
+    const DrmProperty &prop_force_bpc = mDrmCrtc->force_bpc_property();
+    if (prop_force_bpc.id()) {
+        uint32_t bpc = static_cast<uint32_t>(BPC_UNSPECIFIED);
+        if (dqe.DqeControl().enable) {
+            if (dqe.DqeControl().config->force_10bpc)
+                bpc = static_cast<uint32_t>(BPC_10);
+        }
+        uint64_t bpcEnum = 0;
+        std::tie(bpcEnum, ret) = halToDrmEnum(bpc, mBpcEnums);
+        if (ret < 0) {
+            HWC_LOGE(mExynosDisplay, "Fail to convert bpc(%d)", bpc);
+        } else {
+            if ((ret = drmReq.atomicAddProperty(mDrmCrtc->id(), prop_force_bpc,
+                            bpcEnum, true)) < 0) {
+                HWC_LOGE(mExynosDisplay, "%s: Fail to set force bpc property",
+                        __func__);
+            }
+        }
+    }
 
     return NO_ERROR;
 }
 
+template<typename StageDataType>
 int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorBlob(
         const std::unique_ptr<DrmPlane> &plane,
         const DrmProperty &prop,
         const uint32_t type,
-        const IDisplayColorGeneric::DisplayStage &stage,
+        const StageDataType &stage,
         const IDisplayColorGS101::IDpp &dpp,
         const uint32_t dppIndex,
         ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq)
 {
-    if (!prop.id())
+    /* dirty bit is valid only if enable is true */
+    if (!prop.id() || (stage.enable && !stage.dirty))
         return NO_ERROR;
 
     if (dppIndex >= mOldDppBlobs.size()) {
@@ -417,37 +564,39 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorBlob(
     uint32_t blobId = 0;
 
     if (stage.enable) {
-        if (stage.dirty) {
-            switch (type) {
-                case DppBlobs::EOTF:
-                    ret = createEotfBlobFromIDpp(dpp, blobId);
-                    break;
-                case DppBlobs::GM:
-                    ret = createGmBlobFromIDpp(dpp, blobId);
-                    break;
-                case DppBlobs::DTM:
-                    ret = createDtmBlobFromIDpp(dpp, blobId);
-                    break;
-                case DppBlobs::OETF:
-                    ret = createOetfBlobFromIDpp(dpp, blobId);
-                    break;
-                default:
-                    ret = -EINVAL;
-            }
-            if (ret != NO_ERROR) {
-                HWC_LOGE(mExynosDisplay, "%s: create blob fail", __func__);
-                return ret;
-            }
-            oldDppBlobs.addBlob(type, blobId);
-        } else {
-            blobId = oldDppBlobs.getBlob(type);
+        switch (type) {
+            case DppBlobs::EOTF:
+                ret = createEotfBlobFromIDpp(dpp, blobId);
+                break;
+            case DppBlobs::GM:
+                ret = createGmBlobFromIDpp(dpp, blobId);
+                break;
+            case DppBlobs::DTM:
+                ret = createDtmBlobFromIDpp(dpp, blobId);
+                break;
+            case DppBlobs::OETF:
+                ret = createOetfBlobFromIDpp(dpp, blobId);
+                break;
+            default:
+                ret = -EINVAL;
+        }
+        if (ret != NO_ERROR) {
+            HWC_LOGE(mExynosDisplay, "%s: create blob fail", __func__);
+            return ret;
         }
     }
+
+    /* Skip setting when previous and current setting is same with 0 */
+    if ((blobId == 0) && (oldDppBlobs.getBlob(type) == 0))
+        return ret;
+
     if ((ret = drmReq.atomicAddProperty(plane->id(), prop, blobId)) < 0) {
         HWC_LOGE(mExynosDisplay, "%s: Fail to set property",
                 __func__);
         return ret;
     }
+
+    oldDppBlobs.addBlob(type, blobId);
 
     return ret;
 }
