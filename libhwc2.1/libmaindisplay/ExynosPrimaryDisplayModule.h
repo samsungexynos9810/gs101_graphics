@@ -125,12 +125,12 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         const IDisplayColorGS101::IDpp& getDppForLayer(ExynosLayer* layer);
         int32_t getDppIndexForLayer(ExynosLayer* layer);
         size_t getNumOfDpp() {
-            return mDisplaySceneInfo.layerDataMappingInfo.size();
+            return mDisplayColorInterface->GetPipelineData(DisplayType::DISPLAY_PRIMARY)->Dpp().size();
         };
 
         const IDisplayColorGS101::IDqe& getDqe()
         {
-            return mDisplayColorInterface->Dqe();
+            return mDisplayColorInterface->GetPipelineData(DisplayType::DISPLAY_PRIMARY)->Dqe();
         };
 
     private:

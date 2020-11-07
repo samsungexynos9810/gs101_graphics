@@ -39,7 +39,8 @@ ExynosPrimaryDisplayModule::ExynosPrimaryDisplayModule(uint32_t __unused type, E
     exynosHWCControl.forceGpu = true;
 #endif
 
-    mDisplayColorInterface = mDisplayColorLoader.GetDisplayColorGS101();
+    mDisplayColorInterface = mDisplayColorLoader.GetDisplayColorGS101(1);
+    mDisplaySceneInfo.displayScene.dpu_bit_depth = BitDepth::kTen;
 }
 
 ExynosPrimaryDisplayModule::~ExynosPrimaryDisplayModule () {
@@ -113,7 +114,7 @@ int32_t ExynosPrimaryDisplayModule::getColorModes(
         uint32_t* outNumModes, int32_t* outModes)
 {
     const ColorModesMap colorModeMap =
-        mDisplayColorInterface->ColorModesAndRenderIntents();
+        mDisplayColorInterface->ColorModesAndRenderIntents(DisplayType::DISPLAY_PRIMARY);
     ALOGD("%s: size(%zu)", __func__, colorModeMap.size());
     if (outModes == nullptr) {
         *outNumModes = colorModeMap.size();
@@ -140,7 +141,7 @@ int32_t ExynosPrimaryDisplayModule::setColorMode(int32_t mode)
 {
     ALOGD("%s: mode(%d)", __func__, mode);
     const ColorModesMap colorModeMap =
-        mDisplayColorInterface->ColorModesAndRenderIntents();
+        mDisplayColorInterface->ColorModesAndRenderIntents(DisplayType::DISPLAY_PRIMARY);
     hwc::ColorMode colorMode =
         static_cast<hwc::ColorMode>(mode);
     const auto it = colorModeMap.find(colorMode);
@@ -161,7 +162,7 @@ int32_t ExynosPrimaryDisplayModule::getRenderIntents(int32_t mode,
         uint32_t* outNumIntents, int32_t* outIntents)
 {
     const ColorModesMap colorModeMap =
-        mDisplayColorInterface->ColorModesAndRenderIntents();
+        mDisplayColorInterface->ColorModesAndRenderIntents(DisplayType::DISPLAY_PRIMARY);
     ALOGD("%s, size(%zu)", __func__, colorModeMap.size());
     hwc::ColorMode colorMode =
         static_cast<hwc::ColorMode>(mode);
@@ -196,7 +197,7 @@ int32_t ExynosPrimaryDisplayModule::setColorModeWithRenderIntent(int32_t mode,
 {
     ALOGD("%s: mode(%d), intent(%d)", __func__, mode, intent);
     const ColorModesMap colorModeMap =
-        mDisplayColorInterface->ColorModesAndRenderIntents();
+        mDisplayColorInterface->ColorModesAndRenderIntents(DisplayType::DISPLAY_PRIMARY);
     hwc::ColorMode colorMode =
         static_cast<hwc::ColorMode>(mode);
     hwc::RenderIntent renderIntent =
@@ -288,9 +289,9 @@ bool ExynosPrimaryDisplayModule::hasDppForLayer(ExynosLayer* layer)
         return false;
 
     uint32_t index =  mDisplaySceneInfo.layerDataMappingInfo[layer];
-    if (index >= mDisplayColorInterface->Dpp().size()) {
-        DISPLAY_LOGE("%s: invalid dpp index(%d) dpp size(%zu)",
-                __func__, index, mDisplayColorInterface->Dpp().size());
+    auto size = mDisplayColorInterface->GetPipelineData(DisplayType::DISPLAY_PRIMARY)->Dpp().size();
+    if (index >= size) {
+        DISPLAY_LOGE("%s: invalid dpp index(%d) dpp size(%zu)", __func__, index, size);
         return false;
     }
 
@@ -300,7 +301,7 @@ bool ExynosPrimaryDisplayModule::hasDppForLayer(ExynosLayer* layer)
 const IDisplayColorGS101::IDpp& ExynosPrimaryDisplayModule::getDppForLayer(ExynosLayer* layer)
 {
     uint32_t index = mDisplaySceneInfo.layerDataMappingInfo[layer];
-    return mDisplayColorInterface->Dpp()[index].get();
+    return mDisplayColorInterface->GetPipelineData(DisplayType::DISPLAY_PRIMARY)->Dpp()[index].get();
 }
 
 int32_t ExynosPrimaryDisplayModule::getDppIndexForLayer(ExynosLayer* layer)
@@ -511,11 +512,10 @@ int32_t ExynosPrimaryDisplayModule::updateColorConversionInfo()
     if (hwcCheckDebugMessages(eDebugColorManagement))
         mDisplaySceneInfo.printDisplayScene();
 
-    if (mDisplaySceneInfo.colorSettingChanged) {
-        if ((ret = mDisplayColorInterface->Update(mDisplaySceneInfo.displayScene)) != 0) {
-            DISPLAY_LOGE("Display Scene update error (%d)", ret);
-            return ret;
-        }
+    if ((ret = mDisplayColorInterface->Update(DisplayType::DISPLAY_PRIMARY,
+                                              mDisplaySceneInfo.displayScene)) != 0) {
+        DISPLAY_LOGE("Display Scene update error (%d)", ret);
+        return ret;
     }
 
     return ret;

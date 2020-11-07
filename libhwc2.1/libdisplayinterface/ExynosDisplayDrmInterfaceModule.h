@@ -49,6 +49,10 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
                 uint32_t &blobId);
         int32_t createLinearMatBlobFromIDqe(const IDisplayColorGS101::IDqe &dqe,
                 uint32_t &blobId);
+        int32_t createDispDitherBlobFromIDqe(const IDisplayColorGS101::IDqe &dqe,
+                uint32_t &blobId);
+        int32_t createCgcDitherBlobFromIDqe(const IDisplayColorGS101::IDqe &dqe,
+                uint32_t &blobId);
 
         int32_t createEotfBlobFromIDpp(const IDisplayColorGS101::IDpp &dpp,
                 uint32_t &blobId);
@@ -80,6 +84,8 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
                     REGAMMA_LUT,
                     GAMMA_MAT,
                     LINEAR_MAT,
+                    DISP_DITHER,
+                    CGC_DITHER,
                     DQE_BLOB_NUM // number of DQE blobs
                 };
                 void init(DrmDevice *drmDevice) {
@@ -99,20 +105,23 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
                     SaveBlob::init(drmDevice, DPP_BLOB_NUM);
                 };
         };
+        template<typename StageDataType>
         int32_t setDisplayColorBlob(
                 const DrmProperty &prop,
                 const uint32_t type,
-                const IDisplayColorGeneric::DisplayStage &stage,
+                const StageDataType &stage,
                 const IDisplayColorGS101::IDqe &dqe,
                 ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq);
+        template<typename StageDataType>
         int32_t setPlaneColorBlob(
                 const std::unique_ptr<DrmPlane> &plane,
                 const DrmProperty &prop,
                 const uint32_t type,
-                const IDisplayColorGeneric::DisplayStage &stage,
+                const StageDataType &stage,
                 const IDisplayColorGS101::IDpp &dpp,
                 const uint32_t dppIndex,
                 ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq);
+        void parseBpcEnums(const DrmProperty& property);
         DqeBlobs mOldDqeBlobs;
         std::vector<DppBlobs> mOldDppBlobs;
         void resizeOldDppBlobs(uint32_t size) {
@@ -125,6 +134,12 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
             }
         };
         bool mColorSettingChanged = false;
+        enum Bpc_Type {
+            BPC_UNSPECIFIED = 0,
+            BPC_8,
+            BPC_10,
+        };
+        DrmPropertyMap mBpcEnums;
 };
 
 class ExynosPrimaryDisplayDrmInterfaceModule : public ExynosDisplayDrmInterfaceModule {
