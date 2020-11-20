@@ -272,7 +272,8 @@ int32_t ExynosPrimaryDisplayModule::setLayersColorData()
             return ret;
         }
 
-        if ((ret = mDisplaySceneInfo.setLayerColorData(layerColorData, layer))
+        if ((ret = mDisplaySceneInfo.setLayerColorData(layerColorData, layer,
+                                                       getBrightnessState().dim_sdr_ratio))
                 != NO_ERROR) {
             DISPLAY_LOGE("%s: layer[%d] setLayerColorData fail, layerNum(%d)",
                     __func__, i, layerNum);
@@ -470,7 +471,7 @@ void ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerHdrDynamicMetadata(
 }
 
 int32_t ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerColorData(
-        LayerColorData& layerData, ExynosLayer* layer)
+        LayerColorData& layerData, ExynosLayer* layer, float dimSdrRatio)
 {
     setLayerDataspace(layerData,
             static_cast<hwc::Dataspace>(layer->mDataSpace));
@@ -499,12 +500,47 @@ int32_t ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerColorData(
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
     };
-    if (layer->mLayerColorTransform.enable)
-        setLayerColorTransform(layerData,
-                layer->mLayerColorTransform.mat);
-    else
-        setLayerColorTransform(layerData,
-                defaultMatrix);
+
+    if (dimSdrRatio == 1.0 || layer->mIsHdrLayer) {
+        if (layer->mLayerColorTransform.enable)
+            setLayerColorTransform(layerData,
+                    layer->mLayerColorTransform.mat);
+        else
+            setLayerColorTransform(layerData,
+                    defaultMatrix);
+    } else {
+        if (layer->mLayerColorTransform.enable) {
+            std::array<float, TRANSFORM_MAT_SIZE> scaleMatrix =
+                layer->mLayerColorTransform.mat;
+
+            // scale coeffs
+            scaleMatrix[0] *= dimSdrRatio;
+            scaleMatrix[1] *= dimSdrRatio;
+            scaleMatrix[2] *= dimSdrRatio;
+            scaleMatrix[4] *= dimSdrRatio;
+            scaleMatrix[5] *= dimSdrRatio;
+            scaleMatrix[6] *= dimSdrRatio;
+            scaleMatrix[8] *= dimSdrRatio;
+            scaleMatrix[9] *= dimSdrRatio;
+            scaleMatrix[10] *= dimSdrRatio;
+
+            // scale offsets
+            scaleMatrix[12] *= dimSdrRatio;
+            scaleMatrix[13] *= dimSdrRatio;
+            scaleMatrix[14] *= dimSdrRatio;
+
+            setLayerColorTransform(layerData, scaleMatrix);
+        } else {
+            std::array<float, TRANSFORM_MAT_SIZE> scaleMatrix = {
+                dimSdrRatio, 0.0, 0.0, 0.0,
+                0.0, dimSdrRatio, 0.0, 0.0,
+                0.0, 0.0, dimSdrRatio, 0.0,
+                0.0, 0.0, 0.0, 1.0
+            };
+
+            setLayerColorTransform(layerData, scaleMatrix);
+        }
+    }
 
     return NO_ERROR;
 }

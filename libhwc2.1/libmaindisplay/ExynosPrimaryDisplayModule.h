@@ -121,7 +121,7 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                 void setLayerHdrDynamicMetadata(LayerColorData& layerColorData,
                         const ExynosHdrDynamicInfo& exynosHdrDynamicInfo);
                 int32_t setLayerColorData(LayerColorData& layerData,
-                        ExynosLayer* layer);
+                        ExynosLayer* layer, float dimSdrRatio);
                 bool needDisplayColorSetting();
                 void printDisplayScene();
                 void printLayerColorData(const LayerColorData& layerData);
