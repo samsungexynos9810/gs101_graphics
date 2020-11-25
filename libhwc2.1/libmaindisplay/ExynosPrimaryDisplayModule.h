@@ -58,12 +58,12 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                 /*
                  * Index of LayerColorData in DisplayScene::layer_data
                  * and assigned plane id in last color setting update.
-                 * for each layer
-                 * key: ExynosLayer*
+                 * for each layer, including client composition
+                 * key: ExynosMPPSource*
                  * data: LayerMappingInfo
                  */
-                std::map<ExynosLayer*, LayerMappingInfo> layerDataMappingInfo;
-                std::map<ExynosLayer*, LayerMappingInfo> prev_layerDataMappingInfo;
+                std::map<ExynosMPPSource*, LayerMappingInfo> layerDataMappingInfo;
+                std::map<ExynosMPPSource*, LayerMappingInfo> prev_layerDataMappingInfo;
 
                 void reset() {
                     colorSettingChanged = false;
@@ -109,7 +109,7 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                 }
 
                 LayerColorData& getLayerColorDataInstance(uint32_t index);
-                int32_t setLayerDataMappingInfo(ExynosLayer* layer, uint32_t index);
+                int32_t setLayerDataMappingInfo(ExynosMPPSource* layer, uint32_t index);
                 void setLayerDataspace(LayerColorData& layerColorData,
                         hwc::Dataspace dataspace);
                 void disableLayerHdrStaticMetadata(LayerColorData& layerColorData);
@@ -122,18 +122,21 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                         const ExynosHdrDynamicInfo& exynosHdrDynamicInfo);
                 int32_t setLayerColorData(LayerColorData& layerData,
                         ExynosLayer* layer, float dimSdrRatio);
+                int32_t setClientCompositionColorData(
+                    const ExynosCompositionInfo& clientCompositionInfo,
+                    LayerColorData& layerData, float dimSdrRatio);
                 bool needDisplayColorSetting();
                 void printDisplayScene();
                 void printLayerColorData(const LayerColorData& layerData);
         };
 
         /* Call getDppForLayer() only if hasDppForLayer() is true */
-        bool hasDppForLayer(ExynosLayer* layer);
-        const IDisplayColorGS101::IDpp& getDppForLayer(ExynosLayer* layer);
-        int32_t getDppIndexForLayer(ExynosLayer* layer);
+        bool hasDppForLayer(ExynosMPPSource* layer);
+        const IDisplayColorGS101::IDpp& getDppForLayer(ExynosMPPSource* layer);
+        int32_t getDppIndexForLayer(ExynosMPPSource* layer);
         /* Check if layer's assigned plane id has changed, save the new planeId.
          * call only if hasDppForLayer is true */
-        bool checkAndSaveLayerPlaneId(ExynosLayer* layer, uint32_t planeId) {
+        bool checkAndSaveLayerPlaneId(ExynosMPPSource* layer, uint32_t planeId) {
             auto &info = mDisplaySceneInfo.layerDataMappingInfo[layer];
             // TODO: Force update every frame before b/174244159 fix
             bool change = true; // info.planeId != planeId;
