@@ -548,10 +548,11 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorBlob(
         const StageDataType &stage,
         const IDisplayColorGS101::IDpp &dpp,
         const uint32_t dppIndex,
-        ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq)
+        ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq,
+        bool forceUpdate)
 {
     /* dirty bit is valid only if enable is true */
-    if (!prop.id() || (stage.enable && !stage.dirty))
+    if (!prop.id() || (stage.enable && !stage.dirty && !forceUpdate))
         return NO_ERROR;
 
     if (dppIndex >= mOldDppBlobs.size()) {
@@ -587,7 +588,7 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorBlob(
     }
 
     /* Skip setting when previous and current setting is same with 0 */
-    if ((blobId == 0) && (oldDppBlobs.getBlob(type) == 0))
+    if ((blobId == 0) && (oldDppBlobs.getBlob(type) == 0) && !forceUpdate)
         return ret;
 
     if ((ret = drmReq.atomicAddProperty(plane->id(), prop, blobId)) < 0) {
@@ -654,32 +655,33 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
 
     const IDisplayColorGS101::IDpp &dpp = display->getDppForLayer(layer);
     const uint32_t dppIndex = static_cast<uint32_t>(display->getDppIndexForLayer(layer));
+    bool planeChanged = display->checkAndSaveLayerPlaneId(layer, plane->id());
 
     int ret = 0;
     if ((ret = setPlaneColorBlob(plane, plane->eotf_lut_property(),
                 static_cast<uint32_t>(DppBlobs::EOTF),
-                dpp.EotfLut(), dpp, dppIndex, drmReq) != NO_ERROR)) {
+                dpp.EotfLut(), dpp, dppIndex, drmReq, planeChanged) != NO_ERROR)) {
         HWC_LOGE(mExynosDisplay, "%s: dpp[%d] set oetf blob fail",
                 __func__, dppIndex);
         return ret;
     }
     if ((ret = setPlaneColorBlob(plane, plane->gammut_matrix_property(),
                 static_cast<uint32_t>(DppBlobs::GM),
-                dpp.Gm(), dpp, dppIndex, drmReq) != NO_ERROR)) {
+                dpp.Gm(), dpp, dppIndex, drmReq, planeChanged) != NO_ERROR)) {
         HWC_LOGE(mExynosDisplay, "%s: dpp[%d] set GM blob fail",
                 __func__, dppIndex);
         return ret;
     }
     if ((ret = setPlaneColorBlob(plane, plane->tone_mapping_property(),
                 static_cast<uint32_t>(DppBlobs::DTM),
-                dpp.Dtm(), dpp, dppIndex, drmReq) != NO_ERROR)) {
+                dpp.Dtm(), dpp, dppIndex, drmReq, planeChanged) != NO_ERROR)) {
         HWC_LOGE(mExynosDisplay, "%s: dpp[%d] set DTM blob fail",
                 __func__, dppIndex);
         return ret;
     }
     if ((ret = setPlaneColorBlob(plane, plane->oetf_lut_property(),
                 static_cast<uint32_t>(DppBlobs::OETF),
-                dpp.OetfLut(), dpp, dppIndex, drmReq) != NO_ERROR)) {
+                dpp.OetfLut(), dpp, dppIndex, drmReq, planeChanged) != NO_ERROR)) {
         HWC_LOGE(mExynosDisplay, "%s: dpp[%d] set OETF blob fail",
                 __func__, dppIndex);
         return ret;
