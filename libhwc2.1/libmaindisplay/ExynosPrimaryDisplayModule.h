@@ -135,7 +135,8 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
          * call only if hasDppForLayer is true */
         bool checkAndSaveLayerPlaneId(ExynosLayer* layer, uint32_t planeId) {
             auto &info = mDisplaySceneInfo.layerDataMappingInfo[layer];
-            bool change = info.planeId != planeId;
+            // TODO: Force update every frame before b/174244159 fix
+            bool change = true; // info.planeId != planeId;
             info.planeId = planeId;
             return change;
         }
