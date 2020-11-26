@@ -597,6 +597,9 @@ int32_t ExynosPrimaryDisplayModule::updateColorConversionInfo()
 
     if ((ret = setLayersColorData()) != NO_ERROR)
         return ret;
+
+    mDisplaySceneInfo.displayScene.force_hdr = getBrightnessState().dim_sdr_ratio != 1.0;
+
     if (hwcCheckDebugMessages(eDebugColorManagement))
         mDisplaySceneInfo.printDisplayScene();
 
