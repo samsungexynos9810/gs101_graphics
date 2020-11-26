@@ -32,6 +32,12 @@ mpp_phycal_type_t getMPPTypeFromDPPChannel(uint32_t channel) {
     return MPP_P_TYPE_MAX;
 }
 
+// enable map layerDataMappingInfo comparison in needDisplayColorSetting()
+inline bool operator==(const ExynosPrimaryDisplayModule::DisplaySceneInfo::LayerMappingInfo &lm1,
+                       const ExynosPrimaryDisplayModule::DisplaySceneInfo::LayerMappingInfo &lm2) {
+    return lm1.dppIdx == lm2.dppIdx && lm1.planeId == lm2.planeId;
+}
+
 ExynosPrimaryDisplayModule::ExynosPrimaryDisplayModule(uint32_t __unused type, ExynosDevice *device)
     :    ExynosPrimaryDisplay(HWC_DISPLAY_PRIMARY, device), mDisplayColorLoader(DISPLAY_COLOR_LIB)
 {
@@ -288,7 +294,7 @@ bool ExynosPrimaryDisplayModule::hasDppForLayer(ExynosLayer* layer)
     if (mDisplaySceneInfo.layerDataMappingInfo.count(layer) == 0)
         return false;
 
-    uint32_t index =  mDisplaySceneInfo.layerDataMappingInfo[layer];
+    uint32_t index =  mDisplaySceneInfo.layerDataMappingInfo[layer].dppIdx;
     auto size = mDisplayColorInterface->GetPipelineData(DisplayType::DISPLAY_PRIMARY)->Dpp().size();
     if (index >= size) {
         DISPLAY_LOGE("%s: invalid dpp index(%d) dpp size(%zu)", __func__, index, size);
@@ -300,7 +306,7 @@ bool ExynosPrimaryDisplayModule::hasDppForLayer(ExynosLayer* layer)
 
 const IDisplayColorGS101::IDpp& ExynosPrimaryDisplayModule::getDppForLayer(ExynosLayer* layer)
 {
-    uint32_t index = mDisplaySceneInfo.layerDataMappingInfo[layer];
+    uint32_t index = mDisplaySceneInfo.layerDataMappingInfo[layer].dppIdx;
     return mDisplayColorInterface->GetPipelineData(DisplayType::DISPLAY_PRIMARY)->Dpp()[index].get();
 }
 
@@ -308,7 +314,7 @@ int32_t ExynosPrimaryDisplayModule::getDppIndexForLayer(ExynosLayer* layer)
 {
     if (mDisplaySceneInfo.layerDataMappingInfo.count(layer) == 0)
         return -1;
-    uint32_t index = mDisplaySceneInfo.layerDataMappingInfo[layer];
+    uint32_t index = mDisplaySceneInfo.layerDataMappingInfo[layer].dppIdx;
 
     return static_cast<int32_t>(index);
 }
@@ -346,7 +352,9 @@ int32_t ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerDataMappingInfo(
                 layer, index);
         return -EINVAL;
     }
-    layerDataMappingInfo.insert(std::make_pair(layer, index));
+    uint32_t oldPlaneId = prev_layerDataMappingInfo.count(layer) != 0 ?
+                  prev_layerDataMappingInfo[layer].planeId : UINT_MAX;
+    layerDataMappingInfo.insert(std::make_pair(layer, LayerMappingInfo{ index, oldPlaneId }));
 
     return NO_ERROR;
 }
@@ -557,7 +565,7 @@ void ExynosPrimaryDisplayModule::DisplaySceneInfo::printDisplayScene()
     ALOGD("layerDataMappingInfo: %zu ++++++",
             layerDataMappingInfo.size());
     for (auto layer : layerDataMappingInfo) {
-        ALOGD("[layer: %p] %d", layer.first, layer.second);
+        ALOGD("[layer: %p] [%d, %d]", layer.first, layer.second.dppIdx, layer.second.planeId);
     }
 }
 
