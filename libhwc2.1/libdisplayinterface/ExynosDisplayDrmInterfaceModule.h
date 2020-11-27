@@ -120,7 +120,8 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
                 const StageDataType &stage,
                 const IDisplayColorGS101::IDpp &dpp,
                 const uint32_t dppIndex,
-                ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq);
+                ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq,
+                bool forceUpdate);
         void parseBpcEnums(const DrmProperty& property);
         DqeBlobs mOldDqeBlobs;
         std::vector<DppBlobs> mOldDppBlobs;

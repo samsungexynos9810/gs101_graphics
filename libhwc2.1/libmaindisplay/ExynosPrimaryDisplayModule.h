@@ -46,17 +46,24 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
 
         class DisplaySceneInfo {
             public:
+                struct LayerMappingInfo {
+                    // index in DisplayScene::layer_data
+                    uint32_t dppIdx;
+                    // assigned drm plane id in last color setting update
+                    uint32_t planeId;
+                };
                 bool colorSettingChanged = false;
                 DisplayScene displayScene;
 
                 /*
-                 * Index of LayerColorData in displayScene.layer_data[]
+                 * Index of LayerColorData in DisplayScene::layer_data
+                 * and assigned plane id in last color setting update.
                  * for each layer
                  * key: ExynosLayer*
-                 * data: index in displayScene.layer_data[]
+                 * data: LayerMappingInfo
                  */
-                std::map<ExynosLayer*, uint32_t> layerDataMappingInfo;
-                std::map<ExynosLayer*, uint32_t> prev_layerDataMappingInfo;
+                std::map<ExynosLayer*, LayerMappingInfo> layerDataMappingInfo;
+                std::map<ExynosLayer*, LayerMappingInfo> prev_layerDataMappingInfo;
 
                 void reset() {
                     colorSettingChanged = false;
@@ -124,6 +131,16 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         bool hasDppForLayer(ExynosLayer* layer);
         const IDisplayColorGS101::IDpp& getDppForLayer(ExynosLayer* layer);
         int32_t getDppIndexForLayer(ExynosLayer* layer);
+        /* Check if layer's assigned plane id has changed, save the new planeId.
+         * call only if hasDppForLayer is true */
+        bool checkAndSaveLayerPlaneId(ExynosLayer* layer, uint32_t planeId) {
+            auto &info = mDisplaySceneInfo.layerDataMappingInfo[layer];
+            // TODO: Force update every frame before b/174244159 fix
+            bool change = true; // info.planeId != planeId;
+            info.planeId = planeId;
+            return change;
+        }
+
         size_t getNumOfDpp() {
             return mDisplayColorInterface->GetPipelineData(DisplayType::DISPLAY_PRIMARY)->Dpp().size();
         };
@@ -139,4 +156,5 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         DisplaySceneInfo mDisplaySceneInfo;
         DisplayColorLoader mDisplayColorLoader;
 };
+
 #endif
