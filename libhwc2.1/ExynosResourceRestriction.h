@@ -182,61 +182,57 @@ const restriction_key_t restriction_format_table[] =
 };
 
 const restriction_size_element restriction_size_table_rgb[] =
-{
-    {{MPP_DPP_GF, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
-     {  1,  1,  65535,  8191,   16, 16,   1,  1,  4096,   4096,   16,  16,  1,  1,  1,  1}},
-    {{MPP_DPP_VG, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
-     {  1,  1,  65535,  8191,   16, 16,  1,  1,  4096,   4096,   16, 16,  1,  1,  1,  1}},
-    {{MPP_DPP_VGS, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
-     {  2,  8,  65535,  8191,   16, 16,  1,  1,  4096,   4096,   16, 16,  1,  1,  1,  1}},
-    {{MPP_DPP_VGF, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
-     {  1,  1,  65535,  8191,   16, 16,  1,  1,  4096,   4096,   16, 16,  1,  1,  1,  1}},
-    {{MPP_DPP_VGRFS, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
-     {  2,  8,  65535,  8191,   16, 16,  1,  1,  4096,   4096,   16, 16,  1,  1,  1,  1}},
-    {{MPP_DPP_GF, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
-     {  1,  1,  65535,  8191,   16, 16,   1,  1,  4096,   4096,   16,  16,  1,  1,  1,  1}},
-    {{MPP_DPP_VG, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
-     {  1,  1,  65535,  8191,   16, 16,   1,  1,  4096,   4096,   16,  16,  1,  1,  1,  1}},
-    {{MPP_DPP_VGS, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
-     {  2,  8,  65535,  8191,   16, 16,   1,  1,  4096,   4096,   16,  16,  1,  1,  1,  1}},
-    {{MPP_DPP_VGF, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
-     {  1,  1,  65535,  8191,   16, 16,   1,  1,  4096,   4096,   16,  16,  1,  1,  1,  1}},
-    {{MPP_DPP_VGRFS, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
-     {  2,  8,  65535,  8191,   16, 16,   1,  1,  4096,   4096,   16,  16,  1,  1,  1,  1}},
-    /* MPP_G2D maxUpScale = max crop size / min crop size */
-    {{MPP_G2D, NODE_NONE, HAL_PIXEL_FORMAT_NONE, 0},
-     {  8192,  8192,  8192,  8192,  1, 1,  1,  1,  8192,  8192,   1, 1,  1,  1,  1,  1}}
-};
+        {{{MPP_DPP_GF, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
+          {{1, 1, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         {{MPP_DPP_VG, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
+          {{1, 1, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         {{MPP_DPP_VGS, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
+          {{2, 8, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         {{MPP_DPP_VGF, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
+          {{1, 1, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         {{MPP_DPP_VGRFS, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
+          {{2, 8, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         {{MPP_DPP_GF, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
+          {{1, 1, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         {{MPP_DPP_VG, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
+          {{1, 1, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         {{MPP_DPP_VGS, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
+          {{2, 8, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         {{MPP_DPP_VGF, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
+          {{1, 1, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         {{MPP_DPP_VGRFS, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
+          {{2, 8, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         /* MPP_G2D maxUpScale = max crop size / min crop size */
+         {{MPP_G2D, NODE_NONE, HAL_PIXEL_FORMAT_NONE, 0},
+          {{8192, 8192, 8192, 8192, 1, 1, 1, 1, 8192, 8192, 1, 1, 1, 1, 1, 1}}}};
 
 const restriction_size_element restriction_size_table_yuv[] =
-{
-    {{MPP_DPP_GF, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
-        {  1,  1,  65534,  8190,   32, 32,  2,  2,  4096,   4096,   32, 32,  2,  2,  2,  2}},
-    {{MPP_DPP_VG, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
-        {  1,  1,  65534,  8190,   32, 32,  2,  2,  4096,   4096,   32, 32,  2,  2,  2,  2}},
-    {{MPP_DPP_VGS, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
-        {  2,  8,  65534,  8190,   32, 32,  2,  2,  4096,   4096,   32, 32,  2,  2,  2,  2}},
-    {{MPP_DPP_VGF, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
-        {  1,  1,  65534,  8190,   32, 32,  2,  2,  4096,   4096,   32, 32,  2,  2,  2,  2}},
-    {{MPP_DPP_VGRFS, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
-        {  2,  8,  65534,  8190,   32, 32,  2,  2,  4096,   4096,   32, 32,  2,  2,  2,  2}},
-    /* MPP_G2D maxUpScale = max crop size / min crop size */
-    {{MPP_G2D, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
-        {   4,   8192,  8192,  8192,  2,  2,  2,  2,  8192,   8192,   1,  1,  1,  1,  1,  1}},
-    {{MPP_DPP_GF, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
-        {  1,  1,  65535,  8191,   16, 16,  1,  1,  4096,   4096,   16,  16,  1,  1,  1,  1}},
-    {{MPP_DPP_VG, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
-        {  1,  1,  65535,  8191,   16, 16,  1,  1,  4096,   4096,   16,  16,  1,  1,  1,  1}},
-    {{MPP_DPP_VGS, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
-        {  2,  8,  65535,  8191,   16, 16,  1,  1,  4096,   4096,   16,  16,  1,  1,  1,  1}},
-    {{MPP_DPP_VGF, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
-        {  1,  1,  65535,  8191,   16, 16,  1,  1,  4096,   4096,   16,  16,  1,  1,  1,  1}},
-    {{MPP_DPP_VGRFS, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
-        {  2,  8,  65535,  8191,   16, 16,  1,  1,  4096,   4096,   16,  16,  1,  1,  1,  1}},
-    /* MPP_G2D maxUpScale = max crop size / min crop size */
-    {{MPP_G2D, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
-        {   8192,  8192,  8192,  8192,   2,  2,  2,  2,  8192,   8192,   2,  2,  2,  2,  2,  2}}
-};
+        {{{MPP_DPP_GF, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
+          {{1, 1, 65534, 8190, 32, 32, 2, 2, 4096, 4096, 32, 32, 2, 2, 2, 2}}},
+         {{MPP_DPP_VG, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
+          {{1, 1, 65534, 8190, 32, 32, 2, 2, 4096, 4096, 32, 32, 2, 2, 2, 2}}},
+         {{MPP_DPP_VGS, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
+          {{2, 8, 65534, 8190, 32, 32, 2, 2, 4096, 4096, 32, 32, 2, 2, 2, 2}}},
+         {{MPP_DPP_VGF, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
+          {{1, 1, 65534, 8190, 32, 32, 2, 2, 4096, 4096, 32, 32, 2, 2, 2, 2}}},
+         {{MPP_DPP_VGRFS, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
+          {{2, 8, 65534, 8190, 32, 32, 2, 2, 4096, 4096, 32, 32, 2, 2, 2, 2}}},
+         /* MPP_G2D maxUpScale = max crop size / min crop size */
+         {{MPP_G2D, NODE_SRC, HAL_PIXEL_FORMAT_NONE, 0},
+          {{4, 8192, 8192, 8192, 2, 2, 2, 2, 8192, 8192, 1, 1, 1, 1, 1, 1}}},
+         {{MPP_DPP_GF, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
+          {{1, 1, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         {{MPP_DPP_VG, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
+          {{1, 1, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         {{MPP_DPP_VGS, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
+          {{2, 8, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         {{MPP_DPP_VGF, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
+          {{1, 1, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         {{MPP_DPP_VGRFS, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
+          {{2, 8, 65535, 8191, 16, 16, 1, 1, 4096, 4096, 16, 16, 1, 1, 1, 1}}},
+         /* MPP_G2D maxUpScale = max crop size / min crop size */
+         {{MPP_G2D, NODE_DST, HAL_PIXEL_FORMAT_NONE, 0},
+          {{8192, 8192, 8192, 8192, 2, 2, 2, 2, 8192, 8192, 2, 2, 2, 2, 2, 2}}}};
 
 const restriction_table_element restriction_tables[RESTRICTION_MAX] =
 {
