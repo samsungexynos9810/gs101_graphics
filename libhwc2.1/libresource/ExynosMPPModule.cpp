@@ -52,18 +52,25 @@ int32_t ExynosMPPModule::setColorConversionInfo()
         (ExynosPrimaryDisplayModule*)mAssignedDisplay;
 
     for (size_t i = 0; i < mAssignedSources.size(); i++) {
-        ExynosLayer* layer = (ExynosLayer*)mAssignedSources[i];
+        auto mppSource = mAssignedSources[i];
+        ExynosLayer* layer = (ExynosLayer*)mppSource;
         AcrylicLayer* mppLayer = mSrcImgs[i].mppLayer;
-        if (mppLayer == nullptr) {
-            MPP_LOGE("%s: src[%zu] mppLayer is null", __func__, i);
+        if ((mppSource == nullptr) || (layer == nullptr) ||
+            (mppLayer == nullptr)) {
+            MPP_LOGE("%s: src[%zu] source layer is null", __func__, i);
             return -EINVAL;
+        }
+        if (mppSource->mSrcImg.dataSpace == mppSource->mMidImg.dataSpace) {
+            //set null layer data to acryl
+            mppLayer->setLayerData(nullptr, 0);
+            continue;
         }
         if (primaryDisplay->hasDppForLayer(layer) == false) {
             MPP_LOGE("%s: src[%zu] need color conversion but there is no IDpp", __func__, i);
             return -EINVAL;
         }
         MPP_LOGD(eDebugColorManagement,
-                "%s, src: 0x%8x", __func__, layer->mSrcImg.dataSpace);
+                "%s, src: 0x%8x", __func__, mppSource->mSrcImg.dataSpace);
         const IDisplayColorGS101::IDpp& dpp =
             primaryDisplay->getDppForLayer(layer);
         mppLayer->setLayerData((void *)&dpp,
