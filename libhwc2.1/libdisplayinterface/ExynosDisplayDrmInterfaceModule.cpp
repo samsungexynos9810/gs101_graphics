@@ -53,6 +53,7 @@ ExynosDisplayDrmInterfaceModule::~ExynosDisplayDrmInterfaceModule()
 {
 }
 
+#if 0
 void ExynosDisplayDrmInterfaceModule::parseBpcEnums(const DrmProperty& property)
 {
     const std::vector<std::pair<uint32_t, const char *>> bpcEnums = {
@@ -765,6 +766,7 @@ uint32_t ExynosDisplayDrmInterfaceModule::SaveBlob::getBlob(uint32_t type)
     }
     return blobs[type];
 }
+#endif
 
 //////////////////////////////////////////////////// ExynosPrimaryDisplayDrmInterfaceModule //////////////////////////////////////////////////////////////////
 ExynosPrimaryDisplayDrmInterfaceModule::ExynosPrimaryDisplayDrmInterfaceModule(ExynosDisplay *exynosDisplay)
