@@ -254,6 +254,7 @@ int32_t ExynosPrimaryDisplayModule::setLayersColorData()
 {
     int32_t ret = 0;
     uint32_t layerNum = 0;
+
     for (uint32_t i = 0; i < mLayers.size(); i++)
     {
         ExynosLayer* layer = mLayers[i];
@@ -272,11 +273,33 @@ int32_t ExynosPrimaryDisplayModule::setLayersColorData()
             return ret;
         }
 
-        if ((ret = mDisplaySceneInfo.setLayerColorData(layerColorData, layer))
+        if ((ret = mDisplaySceneInfo.setLayerColorData(layerColorData, layer,
+                                                       getBrightnessState().dim_sdr_ratio))
                 != NO_ERROR) {
             DISPLAY_LOGE("%s: layer[%d] setLayerColorData fail, layerNum(%d)",
                     __func__, i, layerNum);
             return ret;
+        }
+
+        layerNum++;
+    }
+
+    if (mClientCompositionInfo.mHasCompositionLayer) {
+        LayerColorData& layerColorData =
+            mDisplaySceneInfo.getLayerColorDataInstance(layerNum);
+
+        /* set layer data mapping info */
+        if ((ret = mDisplaySceneInfo.setLayerDataMappingInfo(&mClientCompositionInfo,
+                                                             layerNum)) != NO_ERROR) {
+            DISPLAY_LOGE("%s: setLayerDataMappingInfo fail for client composition", __func__);
+            return ret;
+        }
+
+        if ((ret = mDisplaySceneInfo.setClientCompositionColorData(
+                 mClientCompositionInfo, layerColorData,
+                 getBrightnessState().dim_sdr_ratio)) != NO_ERROR) {
+          DISPLAY_LOGE("%s: setClientCompositionColorData fail", __func__);
+          return ret;
         }
 
         layerNum++;
@@ -289,7 +312,7 @@ int32_t ExynosPrimaryDisplayModule::setLayersColorData()
     return NO_ERROR;
 }
 
-bool ExynosPrimaryDisplayModule::hasDppForLayer(ExynosLayer* layer)
+bool ExynosPrimaryDisplayModule::hasDppForLayer(ExynosMPPSource* layer)
 {
     if (mDisplaySceneInfo.layerDataMappingInfo.count(layer) == 0)
         return false;
@@ -304,13 +327,13 @@ bool ExynosPrimaryDisplayModule::hasDppForLayer(ExynosLayer* layer)
     return true;
 }
 
-const IDisplayColorGS101::IDpp& ExynosPrimaryDisplayModule::getDppForLayer(ExynosLayer* layer)
+const IDisplayColorGS101::IDpp& ExynosPrimaryDisplayModule::getDppForLayer(ExynosMPPSource* layer)
 {
     uint32_t index = mDisplaySceneInfo.layerDataMappingInfo[layer].dppIdx;
     return mDisplayColorInterface->GetPipelineData(DisplayType::DISPLAY_PRIMARY)->Dpp()[index].get();
 }
 
-int32_t ExynosPrimaryDisplayModule::getDppIndexForLayer(ExynosLayer* layer)
+int32_t ExynosPrimaryDisplayModule::getDppIndexForLayer(ExynosMPPSource* layer)
 {
     if (mDisplaySceneInfo.layerDataMappingInfo.count(layer) == 0)
         return -1;
@@ -345,7 +368,7 @@ LayerColorData& ExynosPrimaryDisplayModule::DisplaySceneInfo::getLayerColorDataI
 }
 
 int32_t ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerDataMappingInfo(
-        ExynosLayer* layer, uint32_t index)
+        ExynosMPPSource* layer, uint32_t index)
 {
     if (layerDataMappingInfo.count(layer) != 0) {
         ALOGE("layer mapping is already inserted (layer: %p, index:%d)",
@@ -469,8 +492,30 @@ void ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerHdrDynamicMetadata(
             DYNAMIC_META_DAT_SIZE);
 }
 
+int32_t ExynosPrimaryDisplayModule::DisplaySceneInfo::setClientCompositionColorData(
+        const ExynosCompositionInfo &clientCompositionInfo, LayerColorData& layerData,
+        float dimSdrRatio)
+{
+    setLayerDataspace(layerData,
+                      static_cast<hwc::Dataspace>(clientCompositionInfo.mDataSpace));
+    disableLayerHdrStaticMetadata(layerData);
+    disableLayerHdrDynamicMetadata(layerData);
+
+    if (dimSdrRatio != 1.0) {
+        std::array<float, TRANSFORM_MAT_SIZE> scaleMatrix = {
+            dimSdrRatio, 0.0, 0.0, 0.0,
+            0.0, dimSdrRatio, 0.0, 0.0,
+            0.0, 0.0, dimSdrRatio, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        };
+        setLayerColorTransform(layerData, scaleMatrix);
+    }
+
+    return NO_ERROR;
+}
+
 int32_t ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerColorData(
-        LayerColorData& layerData, ExynosLayer* layer)
+        LayerColorData& layerData, ExynosLayer* layer, float dimSdrRatio)
 {
     setLayerDataspace(layerData,
             static_cast<hwc::Dataspace>(layer->mDataSpace));
@@ -499,12 +544,47 @@ int32_t ExynosPrimaryDisplayModule::DisplaySceneInfo::setLayerColorData(
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
     };
-    if (layer->mLayerColorTransform.enable)
-        setLayerColorTransform(layerData,
-                layer->mLayerColorTransform.mat);
-    else
-        setLayerColorTransform(layerData,
-                defaultMatrix);
+
+    if (dimSdrRatio == 1.0 || layer->mIsHdrLayer) {
+        if (layer->mLayerColorTransform.enable)
+            setLayerColorTransform(layerData,
+                    layer->mLayerColorTransform.mat);
+        else
+            setLayerColorTransform(layerData,
+                    defaultMatrix);
+    } else {
+        if (layer->mLayerColorTransform.enable) {
+            std::array<float, TRANSFORM_MAT_SIZE> scaleMatrix =
+                layer->mLayerColorTransform.mat;
+
+            // scale coeffs
+            scaleMatrix[0] *= dimSdrRatio;
+            scaleMatrix[1] *= dimSdrRatio;
+            scaleMatrix[2] *= dimSdrRatio;
+            scaleMatrix[4] *= dimSdrRatio;
+            scaleMatrix[5] *= dimSdrRatio;
+            scaleMatrix[6] *= dimSdrRatio;
+            scaleMatrix[8] *= dimSdrRatio;
+            scaleMatrix[9] *= dimSdrRatio;
+            scaleMatrix[10] *= dimSdrRatio;
+
+            // scale offsets
+            scaleMatrix[12] *= dimSdrRatio;
+            scaleMatrix[13] *= dimSdrRatio;
+            scaleMatrix[14] *= dimSdrRatio;
+
+            setLayerColorTransform(layerData, scaleMatrix);
+        } else {
+            std::array<float, TRANSFORM_MAT_SIZE> scaleMatrix = {
+                dimSdrRatio, 0.0, 0.0, 0.0,
+                0.0, dimSdrRatio, 0.0, 0.0,
+                0.0, 0.0, dimSdrRatio, 0.0,
+                0.0, 0.0, 0.0, 1.0
+            };
+
+            setLayerColorTransform(layerData, scaleMatrix);
+        }
+    }
 
     return NO_ERROR;
 }
@@ -517,6 +597,9 @@ int32_t ExynosPrimaryDisplayModule::updateColorConversionInfo()
 
     if ((ret = setLayersColorData()) != NO_ERROR)
         return ret;
+
+    mDisplaySceneInfo.displayScene.force_hdr = getBrightnessState().dim_sdr_ratio != 1.0;
+
     if (hwcCheckDebugMessages(eDebugColorManagement))
         mDisplaySceneInfo.printDisplayScene();
 
