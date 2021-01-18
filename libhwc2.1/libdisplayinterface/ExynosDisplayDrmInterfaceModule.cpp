@@ -618,44 +618,51 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
         return -EINVAL;
     }
     ExynosMPPSource* mppSource = config.assignedMPP->mAssignedSources[0];
-
-    /*
-     * Color conversion of Client and Exynos composition buffer
-     * is already addressed by GLES or G2D
-     */
-    if (mppSource->mSourceType == MPP_SOURCE_COMPOSITION_TARGET)
-        return NO_ERROR;
-
-    if (mppSource->mSourceType != MPP_SOURCE_LAYER) {
-        HWC_LOGE(mExynosDisplay, "%s:: invalid mpp source type (%d)",
-                __func__, mppSource->mSourceType);
+    if (mppSource->mSourceType >= MPP_SOURCE_MAX) {
+        HWC_LOGE(mExynosDisplay,
+                "%s: invalid mpp source type (%d)", __func__, mppSource->mSourceType);
         return -EINVAL;
     }
 
-    ExynosLayer* layer = (ExynosLayer*)mppSource;
+    ExynosPrimaryDisplayModule* display = (ExynosPrimaryDisplayModule*)mExynosDisplay;
 
-    /* color conversion was already handled by m2mMPP */
-    if ((layer->mM2mMPP != nullptr) &&
-        (layer->mSrcImg.dataSpace != layer->mMidImg.dataSpace)) {
-        return NO_ERROR;
+    /*
+     * Color conversion of Client and Exynos composition buffer
+     * is already addressed by GLES or G2D. But as of now, 'dim SDR' is only
+     * supported by HWC/displaycolor, we need put client composition under
+     * control of HWC/displaycolor.
+     */
+    if (!display->hasDppForLayer(mppSource)) {
+        if (mppSource->mSourceType == MPP_SOURCE_LAYER) {
+            HWC_LOGE(mExynosDisplay,
+                "%s: layer need color conversion but there is no IDpp",
+                __func__);
+            return -EINVAL;
+        } else if (mppSource->mSourceType == MPP_SOURCE_COMPOSITION_TARGET) {
+            return NO_ERROR;
+        } else {
+            HWC_LOGE(mExynosDisplay,
+                "%s: invalid mpp source type (%d)", __func__, mppSource->mSourceType);
+            return -EINVAL;
+        }
     }
 
-    ExynosPrimaryDisplayModule* display =
-        (ExynosPrimaryDisplayModule*)mExynosDisplay;
+    if (mppSource->mSourceType == MPP_SOURCE_LAYER) {
+        ExynosLayer* layer = (ExynosLayer*)mppSource;
+
+        /* color conversion was already handled by m2mMPP */
+        if ((layer->mM2mMPP != nullptr) &&
+            (layer->mSrcImg.dataSpace != layer->mMidImg.dataSpace)) {
+            return NO_ERROR;
+        }
+    }
 
     size_t dppSize = display->getNumOfDpp();
     resizeOldDppBlobs(dppSize);
 
-    if (display->hasDppForLayer(layer) == false) {
-        HWC_LOGE(mExynosDisplay,
-                "%s: layer need color conversion but there is no IDpp",
-                __func__);
-        return -EINVAL;
-    }
-
-    const IDisplayColorGS101::IDpp &dpp = display->getDppForLayer(layer);
-    const uint32_t dppIndex = static_cast<uint32_t>(display->getDppIndexForLayer(layer));
-    bool planeChanged = display->checkAndSaveLayerPlaneId(layer, plane->id());
+    const IDisplayColorGS101::IDpp &dpp = display->getDppForLayer(mppSource);
+    const uint32_t dppIndex = static_cast<uint32_t>(display->getDppIndexForLayer(mppSource));
+    bool planeChanged = display->checkAndSaveLayerPlaneId(mppSource, plane->id());
 
     int ret = 0;
     if ((ret = setPlaneColorBlob(plane, plane->eotf_lut_property(),
