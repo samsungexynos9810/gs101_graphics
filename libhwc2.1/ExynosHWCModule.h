@@ -17,6 +17,8 @@
 #ifndef ANDROID_EXYNOS_HWC_MODULE_H_
 #define ANDROID_EXYNOS_HWC_MODULE_H_
 
+#include <array>
+
 #include "ExynosHWC.h"
 #include "DeconHeader.h"
 
@@ -68,9 +70,9 @@ const dpp_channel_map_t IDMA_CHANNEL_MAP[] = {
 struct exynos_display_t {
     uint32_t type;
     uint32_t index;
-    char display_name[MAX_NAME_SIZE];
-    char decon_node_name[MAX_NAME_SIZE];
-    char vsync_node_name[MAX_NAME_SIZE];
+    std::string display_name;
+    std::string decon_node_name;
+    std::string vsync_node_name;
 };
 
 #define PRIMARY_MAIN_BASE_WIN   2
@@ -142,11 +144,9 @@ const exynos_mpp_t AVAILABLE_M2M_MPP_UNITS[] = {
 #endif
 };
 
-const exynos_display_t AVAILABLE_DISPLAY_UNITS[] = {
+const std::array<exynos_display_t, 2> AVAILABLE_DISPLAY_UNITS = {{
     {HWC_DISPLAY_PRIMARY, 0, "PrimaryDisplay", "/dev/dri/card0", ""},
-    {HWC_DISPLAY_PRIMARY, 1, "SecondaryDisplay", "/dev/dri/card0", ""},
-};
-
-#define DISPLAY_COUNT sizeof(AVAILABLE_DISPLAY_UNITS)/sizeof(exynos_display_t)
+    {HWC_DISPLAY_PRIMARY, 1, "SecondaryDisplay", "/dev/dri/card0", ""}
+}};
 
 #endif
