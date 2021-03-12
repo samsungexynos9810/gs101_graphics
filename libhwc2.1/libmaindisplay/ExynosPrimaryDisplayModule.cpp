@@ -47,7 +47,6 @@ ExynosPrimaryDisplayModule::ExynosPrimaryDisplayModule(uint32_t index, ExynosDev
 
     mDisplayColorInterface = mDisplayColorLoader.GetDisplayColorGS101(1);
     mDisplaySceneInfo.displayScene.dpu_bit_depth = BitDepth::kTen;
-    mDisplayControl.forceReserveMPP = true;
 }
 
 ExynosPrimaryDisplayModule::~ExynosPrimaryDisplayModule () {
