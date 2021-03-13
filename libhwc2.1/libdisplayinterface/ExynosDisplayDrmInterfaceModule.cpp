@@ -459,6 +459,11 @@ int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorBlob(
     }
     mOldDqeBlobs.addBlob(type, blobId);
 
+    // disp_dither and cgc dither are part of DqeCtrl stage and the notification
+    // will be sent after all data in DqeCtrl stage are applied.
+    if (type != DqeBlobs::DISP_DITHER && type != DqeBlobs::CGC_DITHER)
+        stage.NotifyDataApplied();
+
     return ret;
 }
 int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
@@ -536,6 +541,7 @@ int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
             }
         }
     }
+    dqe.DqeControl().NotifyDataApplied();
 
     return NO_ERROR;
 }
@@ -598,6 +604,7 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorBlob(
     }
 
     oldDppBlobs.addBlob(type, blobId);
+    stage.NotifyDataApplied();
 
     return ret;
 }
