@@ -719,7 +719,7 @@ bool ExynosPrimaryDisplayModule::parseAtcProfile() {
 
         if (nodes[i][kAtcProfileLuxMapStr].size() != nodes[i][kAtcProfileAlMapStr].size() &&
             nodes[i][kAtcProfileAlMapStr].size() != nodes[i][kAtcProfileStMapStr].size()) {
-            ALOGE("Atc profile is unavailable !");
+            ALOGE("atc profile is unavailable !");
             return false;
         }
 
@@ -740,13 +740,13 @@ bool ExynosPrimaryDisplayModule::parseAtcProfile() {
         }
         auto ret = mAtcModeSetting.insert(std::make_pair(name.c_str(), mode));
         if (ret.second == false) {
-            ALOGE("Atc mode %s is already existed!", ret.first->first.c_str());
+            ALOGE("atc %s mode is already existed!", ret.first->first.c_str());
             return false;
         }
     }
 
     if (mAtcModeSetting.find(kAtcModeNormalStr) == mAtcModeSetting.end()) {
-        ALOGW("Failed to find atc normal mode");
+        ALOGW("Failed to find normal mode");
         return false;
     }
     return true;
@@ -762,89 +762,17 @@ void ExynosPrimaryDisplayModule::initLbe() {
     mAtcInit = true;
 }
 
-int32_t ExynosPrimaryDisplayModule::setAtcAmbientLight(std::vector<atc_lux_map> map, uint32_t lux) {
-    uint32_t index = 0;
-    for (uint32_t i = 0; i < map.size(); i++) {
-        if (lux < map[i].lux) {
-            break;
-        }
-        index = i;
-    }
-
-    if (writeIntToFile(ATC_ST_FILE_NAME, map[index].st) != NO_ERROR) return -EPERM;
-
-    if (writeIntToFile(ATC_AMBIENT_LIGHT_FILE_NAME, map[index].al) != NO_ERROR) return -EPERM;
-
-    return NO_ERROR;
-}
-
-int32_t ExynosPrimaryDisplayModule::setAtcMode(std::string mode_name) {
-    auto it = mAtcModeSetting.find(mode_name);
-    if (it == mAtcModeSetting.end()) {
-        ALOGW("Atc %s mode not found", mode_name.c_str());
-        return -EINVAL;
-    }
-    atc_mode mode = it->second;
-
-    for (auto it = kAtcSubSetting.begin(); it != kAtcSubSetting.end(); it++) {
-        if (writeIntToFile(it->second.c_str(), mode.sub_setting[it->first.c_str()]) != NO_ERROR)
-            return -EPERM;
-    }
-
-    if (setAtcAmbientLight(mode.lux_map, mCurrentLux) != NO_ERROR) {
-        ALOGE("Fail to set atc ambient light for %s mode", mode_name.c_str());
-        return -EPERM;
-    }
-
-    writeIntToFile(ATC_ENABLE_FILE_NAME, 1);
-    mCurrentAtcModeName = mode_name;
-    ALOGI("mCurrentAtcModeName %s", mCurrentAtcModeName.c_str());
-    return NO_ERROR;
-}
 void ExynosPrimaryDisplayModule::setLbeState(LbeState state) {
     if (!mAtcInit) return;
-    std::string modeStr;
-    switch (state) {
-        case LbeState::OFF:
-            writeIntToFile(ATC_ENABLE_FILE_NAME, 0);
-            mCurrentLux = 0;
-            mCurrentLbeState = LbeState::OFF;
-            ALOGI("Lbe state off");
-            return;
-        case LbeState::NORMAL:
-            modeStr = kAtcModeNormalStr;
-            break;
-        case LbeState::HIGH_BRIGHTNESS:
-            modeStr = kAtcModeHbmStr;
-            break;
-        case LbeState::POWER_SAVE:
-            modeStr = kAtcModePowerSaveStr;
-            break;
-        default:
-            ALOGE("Lbe state not support");
-            return;
-    }
-    if (setAtcMode(modeStr) == NO_ERROR) mCurrentLbeState = state;
+    // TODO: set ATC setting
 }
 
 void ExynosPrimaryDisplayModule::setLbeAmbientLight(int value) {
     if (!mAtcInit) return;
-
-    auto it = mAtcModeSetting.find(mCurrentAtcModeName);
-    if (it == mAtcModeSetting.end()) {
-        ALOGE("Atc mode not found");
-        return;
-    }
-    atc_mode mode = it->second;
-
-    if (setAtcAmbientLight(mode.lux_map, value) != NO_ERROR) {
-        ALOGE("Failed to set atc ambient light");
-        return;
-    }
-
-    mCurrentLux = value;
+    // TODO: set ATC ambient light
 }
 
 LbeState ExynosPrimaryDisplayModule::getLbeState() {
-    return mCurrentLbeState;
+    // TODO: get state
+    return LbeState::OFF;
 }
