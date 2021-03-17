@@ -23,65 +23,6 @@
 #include "ExynosPrimaryDisplay.h"
 #include "ExynosLayer.h"
 
-constexpr char kAtcJsonRaw[] =
-        "{\"version\":\"0.0\",\"modes\":[{\"name\":\"normal\",\"lux_map\":[0,5000,10000,"
-        "50000,70000],\"ambient_light_map\":[0,0,12,32,63],\"strength_map\":[0,0,128,128,200],"
-        "\"sub_setting\":{\"local_tone_gain\":128,\"noise_suppression_gain\":128,\"dither\":0,"
-        "\"plain_weight_1\":10,\"plain_weight_2\":14,\"color_transform_mode\":2,\"preprocessing_"
-        "enable\":1,\"upgrade_on\":0,\"TDR_max\":900,\"TDR_min\":256,\"backlight\":255,\"dimming_"
-        "step\":4,\"scale_mode\":1,\"threshold_1\":1,\"threshold_2\":1,\"threshold_3\":1,\"gain_"
-        "limit\":511,\"lt_calc_ab_shift\":1}}]}";
-
-constexpr char kAtcProfilePath[] = "vendor/etc/atc_profile.json";
-constexpr char kAtcProfileVersionStr[] = "version";
-constexpr char kAtcProfileModesStr[] = "modes";
-constexpr char kAtcProfileModeNameStr[] = "name";
-constexpr char kAtcProfileLuxMapStr[] = "lux_map";
-constexpr char kAtcProfileAlMapStr[] = "ambient_light_map";
-constexpr char kAtcProfileStMapStr[] = "strength_map";
-constexpr char kAtcProfileSubSettingStr[] = "sub_setting";
-
-constexpr char kAtcModeNormalStr[] = "normal";
-
-#define ATC_LT_FILE_NAME "/sys/class/dqe/atc/lt"
-#define ATC_NS_FILE_NAME "/sys/class/dqe/atc/ns"
-#define ATC_DITHER_FILE_NAME "/sys/class/dqe/atc/dither"
-#define ATC_PL_W1_FILE_NAME "/sys/class/dqe/atc/pl_w1"
-#define ATC_PL_W2_FILE_NAME "/sys/class/dqe/atc/pl_w2"
-#define ATC_CTMODE_FILE_NAME "/sys/class/dqe/atc/ctmode"
-#define ATC_PP_EN_FILE_NAME "/sys/class/dqe/atc/pp_en"
-#define ATC_UPGRADE_ON_FILE_NAME "/sys/class/dqe/atc/upgrade_on"
-#define ATC_TDR_MAX_FILE_NAME "/sys/class/dqe/atc/tdr_max"
-#define ATC_TDR_MIN_FILE_NAME "/sys/class/dqe/atc/tdr_min"
-#define ATC_BACKLIGHT_FILE_NAME "/sys/class/dqe/atc/back_light"
-#define ATC_DSTEP_FILE_NAME "/sys/class/dqe/atc/dstep"
-#define ATC_SCALE_MODE_FILE_NAME "/sys/class/dqe/atc/scale_mode"
-#define ATC_THRESHOLD_1_FILE_NAME "/sys/class/dqe/atc/threshold_1"
-#define ATC_THRESHOLD_2_FILE_NAME "/sys/class/dqe/atc/threshold_2"
-#define ATC_THRESHOLD_3_FILE_NAME "/sys/class/dqe/atc/threshold_3"
-#define ATC_GAIN_LIMIT_FILE_NAME "/sys/class/dqe/atc/gain_limit"
-#define ATC_LT_CALC_AB_SHIFT_FILE_NAME "/sys/class/dqe/atc/lt_calc_ab_shift"
-
-const std::unordered_map<std::string, std::string> kAtcSubSetting =
-        {{"local_tone_gain", ATC_LT_FILE_NAME},
-         {"noise_suppression_gain", ATC_NS_FILE_NAME},
-         {"dither", ATC_DITHER_FILE_NAME},
-         {"plain_weight_1", ATC_PL_W1_FILE_NAME},
-         {"plain_weight_2", ATC_PL_W2_FILE_NAME},
-         {"color_transform_mode", ATC_CTMODE_FILE_NAME},
-         {"preprocessing_enable", ATC_PP_EN_FILE_NAME},
-         {"upgrade_on", ATC_UPGRADE_ON_FILE_NAME},
-         {"TDR_max", ATC_TDR_MAX_FILE_NAME},
-         {"TDR_min", ATC_TDR_MIN_FILE_NAME},
-         {"backlight", ATC_BACKLIGHT_FILE_NAME},
-         {"dimming_step", ATC_DSTEP_FILE_NAME},
-         {"scale_mode", ATC_SCALE_MODE_FILE_NAME},
-         {"threshold_1", ATC_THRESHOLD_1_FILE_NAME},
-         {"threshold_2", ATC_THRESHOLD_2_FILE_NAME},
-         {"threshold_3", ATC_THRESHOLD_3_FILE_NAME},
-         {"gain_limit", ATC_GAIN_LIMIT_FILE_NAME},
-         {"lt_calc_ab_shift", ATC_LT_CALC_AB_SHIFT_FILE_NAME}};
-
 using namespace displaycolor;
 
 class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
@@ -102,11 +43,6 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         virtual int32_t setColorTransform(const float* matrix, int32_t hint);
         virtual int deliverWinConfigData();
         virtual int32_t updateColorConversionInfo();
-
-        virtual void initLbe();
-        virtual void setLbeState(LbeState state);
-        virtual void setLbeAmbientLight(int value);
-        virtual LbeState getLbeState();
 
         class DisplaySceneInfo {
             public:
@@ -221,21 +157,6 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         IDisplayColorGS101 *mDisplayColorInterface;
         DisplaySceneInfo mDisplaySceneInfo;
         DisplayColorLoader mDisplayColorLoader;
-
-        struct atc_lux_map {
-            uint32_t lux;
-            uint32_t al;
-            uint32_t st;
-        };
-
-        struct atc_mode {
-            std::vector<atc_lux_map> lux_map;
-            std::unordered_map<std::string, int32_t> sub_setting;
-        };
-
-        bool parseAtcProfile();
-        std::map<std::string, atc_mode> mAtcModeSetting;
-        bool mAtcInit;
 };
 
 #endif
