@@ -15,13 +15,8 @@
  */
 
 #include "ExynosPrimaryDisplayModule.h"
-
-#include <android-base/file.h>
-#include <json/reader.h>
-#include <json/value.h>
-
-#include "ExynosDisplayDrmInterfaceModule.h"
 #include "ExynosHWCDebug.h"
+#include "ExynosDisplayDrmInterfaceModule.h"
 
 #ifdef FORCE_GPU_COMPOSITION
 extern exynos_hwc_control exynosHWCControl;
@@ -693,86 +688,4 @@ void ExynosPrimaryDisplayModule::DisplaySceneInfo::printLayerColorData(
         ALOGD("\ttm_knee_x(%d)", layerData.dynamic_metadata.tm_knee_x);
         ALOGD("\ttm_knee_y(%d)", layerData.dynamic_metadata.tm_knee_y);
     }
-}
-
-bool ExynosPrimaryDisplayModule::parseAtcProfile() {
-    Json::Value root;
-    Json::Reader reader;
-    std::string atc_profile;
-
-    if (!android::base::ReadFileToString(kAtcProfilePath, &atc_profile)) {
-        atc_profile = kAtcJsonRaw;
-        ALOGI("Use default atc profile file");
-    }
-
-    if (!reader.parse(atc_profile, root)) {
-        ALOGE("Failed to parse atc profile file");
-        return false;
-    }
-
-    ALOGI("Atc Profile version = %s", root[kAtcProfileVersionStr].asString().c_str());
-    Json::Value nodes = root[kAtcProfileModesStr];
-    atc_mode mode;
-
-    for (Json::Value::ArrayIndex i = 0; i < nodes.size(); ++i) {
-        std::string name = nodes[i][kAtcProfileModeNameStr].asString();
-
-        if (nodes[i][kAtcProfileLuxMapStr].size() != nodes[i][kAtcProfileAlMapStr].size() &&
-            nodes[i][kAtcProfileAlMapStr].size() != nodes[i][kAtcProfileStMapStr].size()) {
-            ALOGE("atc profile is unavailable !");
-            return false;
-        }
-
-        uint32_t map_cnt = nodes[i][kAtcProfileLuxMapStr].size();
-
-        mode.lux_map.clear();
-        for (uint32_t index = 0; index < map_cnt; ++index) {
-            mode.lux_map.emplace_back(atc_lux_map{nodes[i][kAtcProfileLuxMapStr][index].asUInt(),
-                                                  nodes[i][kAtcProfileAlMapStr][index].asUInt(),
-                                                  nodes[i][kAtcProfileStMapStr][index].asUInt()});
-        }
-
-        if (nodes[i][kAtcProfileSubSettingStr].size() != kAtcSubSetting.size()) return false;
-
-        for (auto it = kAtcSubSetting.begin(); it != kAtcSubSetting.end(); it++) {
-            mode.sub_setting[it->first.c_str()] =
-                    nodes[i][kAtcProfileSubSettingStr][it->first.c_str()].asUInt();
-        }
-        auto ret = mAtcModeSetting.insert(std::make_pair(name.c_str(), mode));
-        if (ret.second == false) {
-            ALOGE("atc %s mode is already existed!", ret.first->first.c_str());
-            return false;
-        }
-    }
-
-    if (mAtcModeSetting.find(kAtcModeNormalStr) == mAtcModeSetting.end()) {
-        ALOGW("Failed to find normal mode");
-        return false;
-    }
-    return true;
-}
-
-void ExynosPrimaryDisplayModule::initLbe() {
-    if (!parseAtcProfile()) {
-        ALOGD("Failed to parseAtcMode");
-        mAtcInit = false;
-        return;
-    }
-
-    mAtcInit = true;
-}
-
-void ExynosPrimaryDisplayModule::setLbeState(LbeState state) {
-    if (!mAtcInit) return;
-    // TODO: set ATC setting
-}
-
-void ExynosPrimaryDisplayModule::setLbeAmbientLight(int value) {
-    if (!mAtcInit) return;
-    // TODO: set ATC ambient light
-}
-
-LbeState ExynosPrimaryDisplayModule::getLbeState() {
-    // TODO: get state
-    return LbeState::OFF;
 }
