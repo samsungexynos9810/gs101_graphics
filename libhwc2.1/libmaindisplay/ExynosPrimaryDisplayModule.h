@@ -42,7 +42,12 @@ constexpr char kAtcProfileStMapStr[] = "strength_map";
 constexpr char kAtcProfileSubSettingStr[] = "sub_setting";
 
 constexpr char kAtcModeNormalStr[] = "normal";
+constexpr char kAtcModeHbmStr[] = "hbm";
+constexpr char kAtcModePowerSaveStr[] = "power_save";
 
+#define ATC_AMBIENT_LIGHT_FILE_NAME "/sys/class/dqe/atc/ambient_light"
+#define ATC_ST_FILE_NAME "/sys/class/dqe/atc/st"
+#define ATC_ENABLE_FILE_NAME "/sys/class/dqe/atc/en"
 #define ATC_LT_FILE_NAME "/sys/class/dqe/atc/lt"
 #define ATC_NS_FILE_NAME "/sys/class/dqe/atc/ns"
 #define ATC_DITHER_FILE_NAME "/sys/class/dqe/atc/dither"
@@ -234,8 +239,14 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         };
 
         bool parseAtcProfile();
+        int32_t setAtcMode(std::string mode_name);
+        int32_t setAtcAmbientLight(std::vector<atc_lux_map>, uint32_t lux);
+
         std::map<std::string, atc_mode> mAtcModeSetting;
         bool mAtcInit;
+        LbeState mCurrentLbeState = LbeState::OFF;
+        std::string mCurrentAtcModeName;
+        uint32_t mCurrentLux = 0;
 };
 
 #endif
