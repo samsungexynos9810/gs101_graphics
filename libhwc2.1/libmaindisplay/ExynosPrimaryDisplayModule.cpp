@@ -697,7 +697,8 @@ void ExynosPrimaryDisplayModule::DisplaySceneInfo::printLayerColorData(
 
 bool ExynosPrimaryDisplayModule::parseAtcProfile() {
     Json::Value root;
-    Json::Reader reader;
+    Json::CharReaderBuilder reader_builder;
+    std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
     std::string atc_profile;
 
     if (!android::base::ReadFileToString(kAtcProfilePath, &atc_profile)) {
@@ -705,7 +706,8 @@ bool ExynosPrimaryDisplayModule::parseAtcProfile() {
         ALOGI("Use default atc profile file");
     }
 
-    if (!reader.parse(atc_profile, root)) {
+    if (!reader->parse(atc_profile.c_str(), atc_profile.c_str() + atc_profile.size(), &root,
+                       nullptr)) {
         ALOGE("Failed to parse atc profile file");
         return false;
     }
