@@ -22,16 +22,8 @@
 
 #define G2D_MAX_SRC_NUM 3
 
-#define VSYNC_DEV_PREFIX "/sys/devices/"
-#define VSYNC_DEV_MIDDLE "platform/"
-#ifdef USE_SW_VSYNC
-/* Those are invalid vsync path */
-#define VSYNC_DEV_NAME  ""
-#define PSR_DEV_NAME  ""
-#else
-#define VSYNC_DEV_NAME  "1c300000.decon_f/vsync"
+#define VSYNC_DEV_PREFIX "/sys/devices/platform/"
 #define PSR_DEV_NAME  "1c300000.decon_f/psr_info"
-#endif
 #define VSYNC_DEV_NAME_EXT  "19050000.decon_t/vsync"
 #define DP_LINK_NAME	"130b0000.displayport"
 #define DP_UEVENT_NAME	"change@/devices/platform/%s/extcon/extcon0"
@@ -72,9 +64,15 @@ const dpp_channel_map_t IDMA_CHANNEL_MAP[] = {
     {static_cast<mpp_phycal_type_t>(MAX_DECON_DMA_TYPE), 0, MAX_DECON_DMA_TYPE, IDMA(7)}
 };
 
-#define DECON_PRIMARY_DEV_NAME  "/dev/graphics/fb0"
-#define DECON_EXTERNAL_DEV_NAME "/dev/graphics/fb1"
-#define DECON_EXT_BASE_WINDOW   0
+#define MAX_NAME_SIZE   32
+struct exynos_display_t {
+    uint32_t type;
+    uint32_t index;
+    char display_name[MAX_NAME_SIZE];
+    char decon_node_name[MAX_NAME_SIZE];
+    char vsync_node_name[MAX_NAME_SIZE];
+};
+
 #define PRIMARY_MAIN_BASE_WIN   2
 #define EXTERNAL_MAIN_BASE_WIN  4
 
@@ -118,5 +116,11 @@ const exynos_mpp_t AVAILABLE_M2M_MPP_UNITS[] = {
     {MPP_G2D, MPP_LOGICAL_G2D_COMBO, "G2D0-COMBO_VIR", 0, 5, HWC_DISPLAY_VIRTUAL_BIT|EXTERNAL_MAIN_DISPLAY_VIRTUAL_BIT}
 #endif
 };
+
+const exynos_display_t AVAILABLE_DISPLAY_UNITS[] = {
+    {HWC_DISPLAY_PRIMARY, 0, "PrimaryDisplay", "/dev/dri/card0", ""},
+};
+
+#define DISPLAY_COUNT sizeof(AVAILABLE_DISPLAY_UNITS)/sizeof(exynos_display_t)
 
 #endif

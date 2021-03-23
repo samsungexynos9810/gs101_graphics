@@ -23,8 +23,6 @@ ExynosVirtualDisplayModule::ExynosVirtualDisplayModule(uint32_t index, ExynosDev
 {
     mGLESFormat = HAL_PIXEL_FORMAT_EXYNOS_YCbCr_420_SP_M;
 
-    mDisplayName = android::String8("VirtualDisplay");
-
     if (device == NULL) {
         ALOGE("Display creation failed!");
     }
