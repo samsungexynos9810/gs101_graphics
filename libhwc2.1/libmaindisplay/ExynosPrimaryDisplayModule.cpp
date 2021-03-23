@@ -112,7 +112,7 @@ int32_t ExynosPrimaryDisplayModule::validateWinConfigData()
 void ExynosPrimaryDisplayModule::doPreProcessing() {
     ExynosDisplay::doPreProcessing();
 
-    if (mDevice->checkAdditionalConnection()) {
+    if (mDevice->checkNonInternalConnection()) {
         mDisplayControl.adjustDisplayFrame = true;
     } else {
         mDisplayControl.adjustDisplayFrame = false;
