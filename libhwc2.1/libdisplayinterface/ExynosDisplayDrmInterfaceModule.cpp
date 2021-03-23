@@ -66,12 +66,14 @@ void ExynosDisplayDrmInterfaceModule::parseBpcEnums(const DrmProperty& property)
     }
 }
 
-void ExynosDisplayDrmInterfaceModule::initDrmDevice(DrmDevice *drmDevice)
+int32_t ExynosDisplayDrmInterfaceModule::initDrmDevice(DrmDevice *drmDevice)
 {
-    ExynosDisplayDrmInterface::initDrmDevice(drmDevice);
+    int ret = NO_ERROR;
+    if ((ret = ExynosDisplayDrmInterface::initDrmDevice(drmDevice)) != NO_ERROR)
+        return ret;
 
     if (isPrimary() == false)
-        return;
+        return ret;
 
     mOldDqeBlobs.init(drmDevice);
 
@@ -81,6 +83,7 @@ void ExynosDisplayDrmInterfaceModule::initDrmDevice(DrmDevice *drmDevice)
     resizeOldDppBlobs(dppSize);
     if (mDrmCrtc->force_bpc_property().id())
         parseBpcEnums(mDrmCrtc->force_bpc_property());
+    return ret;
 }
 
 void ExynosDisplayDrmInterfaceModule::destroyOldBlobs(
