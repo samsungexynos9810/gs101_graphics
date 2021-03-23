@@ -43,8 +43,8 @@ inline bool operator==(const ExynosPrimaryDisplayModule::DisplaySceneInfo::Layer
     return lm1.dppIdx == lm2.dppIdx && lm1.planeId == lm2.planeId;
 }
 
-ExynosPrimaryDisplayModule::ExynosPrimaryDisplayModule(uint32_t __unused type, ExynosDevice *device)
-    :    ExynosPrimaryDisplay(HWC_DISPLAY_PRIMARY, device), mDisplayColorLoader(DISPLAY_COLOR_LIB)
+ExynosPrimaryDisplayModule::ExynosPrimaryDisplayModule(uint32_t index, ExynosDevice *device)
+    :    ExynosPrimaryDisplay(index, device), mDisplayColorLoader(DISPLAY_COLOR_LIB)
 {
 #ifdef FORCE_GPU_COMPOSITION
     exynosHWCControl.forceGpu = true;
@@ -111,10 +111,8 @@ int32_t ExynosPrimaryDisplayModule::validateWinConfigData()
 
 void ExynosPrimaryDisplayModule::doPreProcessing() {
     ExynosDisplay::doPreProcessing();
-    ExynosDisplay *externalDisplay = mDevice->getDisplay(HWC_DISPLAY_EXTERNAL);
-    ExynosDisplay *virtualDisplay = mDevice->getDisplay(HWC_DISPLAY_VIRTUAL);
 
-    if ((externalDisplay->mPlugState) || (virtualDisplay->mPlugState)) {
+    if (mDevice->checkNonInternalConnection()) {
         mDisplayControl.adjustDisplayFrame = true;
     } else {
         mDisplayControl.adjustDisplayFrame = false;
