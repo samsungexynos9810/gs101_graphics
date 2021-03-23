@@ -76,8 +76,29 @@ struct exynos_display_t {
 #define PRIMARY_MAIN_BASE_WIN   2
 #define EXTERNAL_MAIN_BASE_WIN  4
 
+/******** Description about display bit ********/
+/*   DISPLAY BIT = 1 << (DISPLAY_MODE_MASK_LEN * display mode
+ *                       + SECOND_DISPLAY_START_BIT * display index
+ *                       + display type);
+ *   ex) HWC_DISPLAY_EXTERNAL2_BIT = 1 << (DISPLAY_MODE_MASK_LEN * display mode(0)
+ *                                         + SECOND_DISPLAY_START_BIT * display index(1)
+ *                                         + displayy type(1))
+ *                                 = 1 << 5
+ *   PRIMARY MAIN MODE :
+ *      0 bit : HWC_DISPLAY_PRIMARY_BIT,
+ *      1 bit : HWC_DISPLAY_EXTERNAL_BIT,
+ *      2 bit : HWC_DISPLAY_VIRTUAL_BIT,
+ *      5 bit : HWC_DISPLAY_EXTERNAL2_BIT,
+ *   EXTERNAL MAIN MODE :
+ *      8 bit : EXTERNAL_MAIN_DISPLAY_PRIMARY_BIT,
+ *      9 bit : EXTERNAL_MAIN_DISPLAY_EXTERNAL_BIT,
+ *      10 bit : EXTERNAL_MAIN_DISPLAY_VIRTUAL_BIT,
+ ***************************************************/
+
 #define DISPLAY_MODE_MASK_LEN    8
 #define DISPLAY_MODE_MASK_BIT    0xff
+#define SECOND_DISPLAY_START_BIT   4
+
 enum {
     DISPLAY_MODE_PRIMARY_MAIN = 0,  /* This is default mode */
     DISPLAY_MODE_EXTERNAL_MAIN,
@@ -95,6 +116,10 @@ enum {
     EXTERNAL_MAIN_DISPLAY_PRIMARY_BIT = 1 << (EXTERNAL_MAIN_DISPLAY_START_BIT + HWC_DISPLAY_PRIMARY),
     EXTERNAL_MAIN_DISPLAY_EXTERNAL_BIT = 1 << (EXTERNAL_MAIN_DISPLAY_START_BIT + HWC_DISPLAY_EXTERNAL),
     EXTERNAL_MAIN_DISPLAY_VIRTUAL_BIT = 1 << (EXTERNAL_MAIN_DISPLAY_START_BIT + HWC_DISPLAY_VIRTUAL),
+};
+
+enum {
+    HWC_DISPLAY_EXTERNAL2_BIT = 1 << (SECOND_DISPLAY_START_BIT + HWC_DISPLAY_EXTERNAL),
 };
 
 const exynos_mpp_t AVAILABLE_OTF_MPP_UNITS[] = {
