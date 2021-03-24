@@ -22,11 +22,12 @@
 #endif
 
 #include "ExynosHWCDebug.h"
+#include "ExynosHWCHelper.h"
 
 #define SKIP_FRAME_COUNT        3
 
-ExynosExternalDisplayModule::ExynosExternalDisplayModule(uint32_t __unused type, ExynosDevice *device)
-    :    ExynosExternalDisplay(HWC_DISPLAY_EXTERNAL, device)
+ExynosExternalDisplayModule::ExynosExternalDisplayModule(uint32_t index, ExynosDevice *device)
+    :    ExynosExternalDisplay(index, device)
 {
 
 }
