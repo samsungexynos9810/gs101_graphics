@@ -601,6 +601,12 @@ int32_t ExynosPrimaryDisplayModule::updateColorConversionInfo()
     if ((ret = setLayersColorData()) != NO_ERROR)
         return ret;
 
+    ExynosDisplayDrmInterfaceModule *moduleDisplayInterface =
+        (ExynosDisplayDrmInterfaceModule*)(mDisplayInterface.get());
+    mDisplaySceneInfo.displayScene.bm = moduleDisplayInterface->isHbmOn()
+            ? displaycolor::BrightnessMode::BM_HBM
+            : displaycolor::BrightnessMode::BM_NOMINAL;
+
     mDisplaySceneInfo.displayScene.force_hdr = getBrightnessState().dim_sdr_ratio != 1.0;
 
     if (hwcCheckDebugMessages(eDebugColorManagement))
