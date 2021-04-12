@@ -16,7 +16,11 @@
 
 #include "ExynosDeviceModule.h"
 
-ExynosDeviceModule::ExynosDeviceModule() {
+extern struct exynos_hwc_control exynosHWCControl;
+ExynosDeviceModule::ExynosDeviceModule()
+    : ExynosDevice()
+{
+    exynosHWCControl.skipStaticLayers = false;
 }
 
 ExynosDeviceModule::~ExynosDeviceModule() {
