@@ -50,8 +50,12 @@ ExynosPrimaryDisplayModule::ExynosPrimaryDisplayModule(uint32_t index, ExynosDev
     exynosHWCControl.forceGpu = true;
 #endif
 
-    mDisplayColorInterface = mDisplayColorLoader.GetDisplayColorGS101(1);
     mDisplaySceneInfo.displayScene.dpu_bit_depth = BitDepth::kTen;
+}
+
+int ExynosPrimaryDisplayModule::initDisplayColor() {
+    mDisplayColorInterface = mDisplayColorLoader.GetDisplayColorGS101(1);
+    return mDisplayColorInterface == nullptr ? -EINVAL : NO_ERROR;
 }
 
 ExynosPrimaryDisplayModule::~ExynosPrimaryDisplayModule () {

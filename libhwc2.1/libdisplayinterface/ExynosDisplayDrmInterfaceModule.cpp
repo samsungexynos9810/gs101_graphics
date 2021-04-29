@@ -79,6 +79,13 @@ int32_t ExynosDisplayDrmInterfaceModule::initDrmDevice(DrmDevice *drmDevice)
 
     ExynosPrimaryDisplayModule* display =
         (ExynosPrimaryDisplayModule*)mExynosDisplay;
+
+    ret = display->initDisplayColor();
+    if (ret != NO_ERROR) {
+        HWC_LOGE(mExynosDisplay, "Failed to load displaycolor %d", ret);
+        return ret;
+    }
+
     size_t dppSize = display->getNumOfDpp();
     resizeOldDppBlobs(dppSize);
     if (mDrmCrtc->force_bpc_property().id())
