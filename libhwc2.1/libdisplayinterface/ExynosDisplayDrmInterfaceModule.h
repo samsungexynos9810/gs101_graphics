@@ -101,9 +101,10 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
                     OETF,
                     DPP_BLOB_NUM // number of DPP blobs
                 };
-                void init(DrmDevice *drmDevice) {
+                DppBlobs(DrmDevice *drmDevice, uint32_t pid) : planeId(pid) {
                     SaveBlob::init(drmDevice, DPP_BLOB_NUM);
                 };
+                uint32_t planeId;
         };
         template<typename StageDataType>
         int32_t setDisplayColorBlob(
@@ -125,14 +126,10 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
         void parseBpcEnums(const DrmProperty& property);
         DqeBlobs mOldDqeBlobs;
         std::vector<DppBlobs> mOldDppBlobs;
-        void resizeOldDppBlobs(uint32_t size) {
-            size_t prevSize = mOldDppBlobs.size();
-            if (prevSize == size)
-                return;
-            mOldDppBlobs.resize(size);
-            for (uint32_t i = prevSize; i < size; i++) {
-                mOldDppBlobs[i].init(mDrmDevice);
-            }
+        void initOldDppBlobs(DrmDevice *drmDevice) {
+            auto const &planes = drmDevice->planes();
+            for (uint32_t ix = 0; ix < planes.size(); ++ix)
+                mOldDppBlobs.emplace_back(mDrmDevice, planes[ix]->id());
         };
         bool mColorSettingChanged = false;
         enum Bpc_Type {
