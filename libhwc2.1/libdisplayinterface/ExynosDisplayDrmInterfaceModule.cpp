@@ -86,8 +86,7 @@ int32_t ExynosDisplayDrmInterfaceModule::initDrmDevice(DrmDevice *drmDevice)
         return ret;
     }
 
-    size_t dppSize = display->getNumOfDpp();
-    resizeOldDppBlobs(dppSize);
+    initOldDppBlobs(drmDevice);
     if (mDrmCrtc->force_bpc_property().id())
         parseBpcEnums(mDrmCrtc->force_bpc_property());
     return ret;
@@ -571,11 +570,17 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorBlob(
     if (!prop.id() || (stage.enable && !stage.dirty && !forceUpdate))
         return NO_ERROR;
 
-    if (dppIndex >= mOldDppBlobs.size()) {
-        HWC_LOGE(mExynosDisplay, "%s: invalid dpp index(%d)", __func__, dppIndex);
+    uint32_t ix = 0;
+    for (;ix < mOldDppBlobs.size(); ix++) {
+        if (mOldDppBlobs[ix].planeId == plane->id()) {
+            break;
+        }
+    }
+    if (ix >= mOldDppBlobs.size()) {
+        HWC_LOGE(mExynosDisplay, "%s: could not find plane %d", __func__, plane->id());
         return -EINVAL;
     }
-    DppBlobs &oldDppBlobs = mOldDppBlobs[dppIndex];
+    DppBlobs &oldDppBlobs = mOldDppBlobs[ix];
 
     int32_t ret = 0;
     uint32_t blobId = 0;
@@ -673,9 +678,6 @@ int32_t ExynosDisplayDrmInterfaceModule::setPlaneColorSetting(
             return NO_ERROR;
         }
     }
-
-    size_t dppSize = display->getNumOfDpp();
-    resizeOldDppBlobs(dppSize);
 
     const IDisplayColorGS101::IDpp &dpp = display->getDppForLayer(mppSource);
     const uint32_t dppIndex = static_cast<uint32_t>(display->getDppIndexForLayer(mppSource));
