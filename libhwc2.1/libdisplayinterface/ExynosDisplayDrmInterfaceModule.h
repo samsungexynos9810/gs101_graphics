@@ -21,6 +21,8 @@
 
 #include "ExynosDisplayDrmInterface.h"
 
+namespace gs101 {
+
 using namespace displaycolor;
 
 class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
@@ -151,4 +153,7 @@ class ExynosExternalDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface
         ExynosExternalDisplayDrmInterfaceModule(ExynosDisplay *exynosDisplay);
         virtual ~ExynosExternalDisplayDrmInterfaceModule();
 };
+
+}  // namespace gs101
+
 #endif
