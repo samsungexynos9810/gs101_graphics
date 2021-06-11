@@ -642,6 +642,25 @@ int32_t ExynosPrimaryDisplayModule::updateColorConversionInfo()
     return ret;
 }
 
+int32_t ExynosPrimaryDisplayModule::updatePresentColorConversionInfo()
+{
+    ExynosDisplayDrmInterfaceModule *moduleDisplayInterface =
+        (ExynosDisplayDrmInterfaceModule*)(mDisplayInterface.get());
+    auto refresh_rate = moduleDisplayInterface->getDesiredRefreshRate();
+    if (refresh_rate > 0) {
+        mDisplaySceneInfo.displayScene.refresh_rate = refresh_rate;
+    }
+
+    int ret = OK;
+    if ((ret = mDisplayColorInterface->UpdatePresent(DisplayType::DISPLAY_PRIMARY,
+                                              mDisplaySceneInfo.displayScene)) != 0) {
+        DISPLAY_LOGE("Display Scene update error (%d)", ret);
+        return ret;
+    }
+
+    return ret;
+}
+
 int32_t ExynosPrimaryDisplayModule::getColorAdjustedDbv(uint32_t &dbv_adj) {
     dbv_adj = mDisplayColorInterface->GetPipelineData(DisplayType::DISPLAY_PRIMARY)
                            ->Panel()
