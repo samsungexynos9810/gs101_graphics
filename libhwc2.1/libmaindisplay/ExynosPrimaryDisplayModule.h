@@ -127,6 +127,7 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                     uint32_t planeId;
                 };
                 bool colorSettingChanged = false;
+                bool displaySettingDelivered = false;
                 DisplayScene displayScene;
 
                 /*
