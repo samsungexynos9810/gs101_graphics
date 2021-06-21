@@ -37,8 +37,10 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
                 ExynosDisplayDrmInterface::DrmModeAtomicReq &drmReq,
                 const std::unique_ptr<DrmPlane> &plane,
                 const exynos_win_config_data &config);
-        void setColorSettingChanged(bool changed) {
-            mColorSettingChanged = changed; };
+        void setColorSettingChanged(bool changed, bool forceDisplay = false) {
+            mColorSettingChanged = changed;
+            mForceDisplayColorSetting = forceDisplay;
+        };
         void destroyOldBlobs(std::vector<uint32_t> &oldBlobs);
 
         int32_t createCgcBlobFromIDqe(const IDisplayColorGS101::IDqe &dqe,
@@ -134,6 +136,7 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
                 mOldDppBlobs.emplace_back(mDrmDevice, planes[ix]->id());
         };
         bool mColorSettingChanged = false;
+        bool mForceDisplayColorSetting = false;
         enum Bpc_Type {
             BPC_UNSPECIFIED = 0,
             BPC_8,
