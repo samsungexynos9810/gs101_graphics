@@ -357,12 +357,24 @@ int ExynosPrimaryDisplayModule::deliverWinConfigData()
     ExynosDisplayDrmInterfaceModule *moduleDisplayInterface =
         (ExynosDisplayDrmInterfaceModule*)(mDisplayInterface.get());
 
+    bool forceDisplayColorSetting = false;
+    if (!mDisplaySceneInfo.displaySettingDelivered)
+        forceDisplayColorSetting = true;
+
     moduleDisplayInterface->setColorSettingChanged(
-            mDisplaySceneInfo.needDisplayColorSetting());
+            mDisplaySceneInfo.needDisplayColorSetting(),
+            forceDisplayColorSetting);
 
     ret = ExynosDisplay::deliverWinConfigData();
 
     checkAtcAnimation();
+
+    if (mDpuData.enable_readback &&
+       !mDpuData.readback_info.requested_from_service)
+        mDisplaySceneInfo.displaySettingDelivered = false;
+    else
+        mDisplaySceneInfo.displaySettingDelivered = true;
+
     return ret;
 }
 
