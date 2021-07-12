@@ -114,9 +114,8 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         virtual int deliverWinConfigData();
         virtual int32_t updateColorConversionInfo();
         virtual int32_t updatePresentColorConversionInfo();
-        virtual bool checkEarlyWakeupNeeded(float refresh_rate) {
-            return mDisplayColorInterface->IsRrCompensationEnabled(
-                                  DisplayType::DISPLAY_PRIMARY, refresh_rate);
+        virtual bool checkRrCompensationEnabled() {
+            return mDisplayColorInterface->IsRrCompensationEnabled(DisplayType::DISPLAY_PRIMARY);
         }
         virtual int32_t getColorAdjustedDbv(uint32_t &dbv_adj);
 
