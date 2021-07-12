@@ -628,6 +628,7 @@ int32_t ExynosPrimaryDisplayModule::updateColorConversionInfo()
 
     mDisplaySceneInfo.displayScene.force_hdr = getBrightnessState().dim_sdr_ratio != 1.0;
     mDisplaySceneInfo.displayScene.lhbm_on = getBrightnessState().local_hbm;
+    mDisplaySceneInfo.displayScene.hdr_full_screen = getBrightnessState().hdr_full_screen;
     mDisplaySceneInfo.displayScene.dbv = moduleDisplayInterface->getDbv();
 
     if (hwcCheckDebugMessages(eDebugColorManagement))
