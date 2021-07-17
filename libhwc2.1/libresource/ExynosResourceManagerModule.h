@@ -22,10 +22,6 @@ class ExynosResourceManagerModule : public ExynosResourceManager {
     public:
         ExynosResourceManagerModule(ExynosDevice* device);
         ~ExynosResourceManagerModule();
-
-    protected:
-        void setFrameRateForPerformance(ExynosMPP &mpp,
-                                        AcrylicPerformanceRequestFrame *frame) override;
 };
 
 #endif // _EXYNOS_RESOURCE_MANAGER_MODULE_H
