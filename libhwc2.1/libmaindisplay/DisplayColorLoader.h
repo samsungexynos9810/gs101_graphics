@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+namespace gs101 {
+
 class DisplayColorLoader {
     public:
       DisplayColorLoader(const char *lib_name) {
@@ -94,5 +96,7 @@ class DisplayColorLoader {
       displaycolor::IDisplayColorGS101 *(*get_display_color_gs101)(
               const std::vector<displaycolor::DisplayInfo> &);
 };
+
+}  // namespace gs101
 
 #endif //DISPLAY_COLOR_LOADER_H
