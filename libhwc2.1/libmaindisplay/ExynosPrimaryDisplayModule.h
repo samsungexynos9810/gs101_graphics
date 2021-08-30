@@ -91,6 +91,8 @@ const std::unordered_map<std::string, std::string> kAtcSubSetting =
          {"gain_limit", ATC_GAIN_LIMIT_FILE_NAME},
          {"lt_calc_ab_shift", ATC_LT_CALC_AB_SHIFT_FILE_NAME}};
 
+namespace gs101 {
+
 using namespace displaycolor;
 
 class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
@@ -125,6 +127,10 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         class DisplaySceneInfo {
             public:
                 struct LayerMappingInfo {
+                    bool operator==(const LayerMappingInfo &rhs) const {
+                        return ((dppIdx == rhs.dppIdx) && (planeId == rhs.planeId));
+                    }
+
                     // index in DisplayScene::layer_data
                     uint32_t dppIdx;
                     // assigned drm plane id in last color setting update
@@ -285,5 +291,7 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         Mutex mAtcStMutex;
         bool mPendingAtcOff;
 };
+
+}  // namespace gs101
 
 #endif
