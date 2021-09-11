@@ -18,10 +18,10 @@
 
 #include <gs101/displaycolor/displaycolor_gs101.h>
 
-#include "DisplayColorLoader.h"
+#include "ExynosDeviceModule.h"
 #include "ExynosDisplay.h"
-#include "ExynosPrimaryDisplay.h"
 #include "ExynosLayer.h"
+#include "ExynosPrimaryDisplay.h"
 
 constexpr char kAtcJsonRaw[] =
         "{\"version\":\"0.0\",\"modes\":[{\"name\":\"normal\",\"lux_map\":[0,5000,10000,"
@@ -115,7 +115,9 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         virtual int32_t updateColorConversionInfo();
         virtual int32_t updatePresentColorConversionInfo();
         virtual bool checkRrCompensationEnabled() {
-            return mDisplayColorInterface->IsRrCompensationEnabled(DisplayType::DISPLAY_PRIMARY);
+            const DisplayType display = getDisplayTypeFromIndex(mIndex);
+            IDisplayColorGS101* displayColorInterface = getDisplayColorInterface();
+            return displayColorInterface->IsRrCompensationEnabled(display);
         }
         virtual int32_t getColorAdjustedDbv(uint32_t &dbv_adj);
 
@@ -215,8 +217,10 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
                 void printLayerColorData(const LayerColorData& layerData);
         };
 
-        int initDisplayColor(const std::vector<displaycolor::DisplayInfo>& display_info);
-        bool hasDisplayColor() { return mDisplayColorInterface != nullptr; }
+        bool hasDisplayColor() {
+            IDisplayColorGS101* displayColorInterface = getDisplayColorInterface();
+            return displayColorInterface != nullptr;
+        }
 
         /* Call getDppForLayer() only if hasDppForLayer() is true */
         bool hasDppForLayer(ExynosMPPSource* layer);
@@ -232,19 +236,21 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         }
 
         size_t getNumOfDpp() {
-            return mDisplayColorInterface->GetPipelineData(DisplayType::DISPLAY_PRIMARY)->Dpp().size();
+            const DisplayType display = getDisplayTypeFromIndex(mIndex);
+            IDisplayColorGS101* displayColorInterface = getDisplayColorInterface();
+            return displayColorInterface->GetPipelineData(display)->Dpp().size();
         };
 
         const IDisplayColorGS101::IDqe& getDqe()
         {
-            return mDisplayColorInterface->GetPipelineData(DisplayType::DISPLAY_PRIMARY)->Dqe();
+            const DisplayType display = getDisplayTypeFromIndex(mIndex);
+            IDisplayColorGS101* displayColorInterface = getDisplayColorInterface();
+            return displayColorInterface->GetPipelineData(display)->Dqe();
         };
 
     private:
         int32_t setLayersColorData();
-        IDisplayColorGS101 *mDisplayColorInterface;
         DisplaySceneInfo mDisplaySceneInfo;
-        DisplayColorLoader mDisplayColorLoader;
 
         struct atc_lux_map {
             uint32_t lux;
@@ -273,6 +279,16 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
             else
                 return false;
         };
+
+        DisplayType getDisplayTypeFromIndex(uint32_t index) {
+            return (index >= DisplayType::DISPLAY_MAX) ? DisplayType::DISPLAY_PRIMARY
+                                                       : DisplayType(mIndex);
+        };
+
+        IDisplayColorGS101* getDisplayColorInterface() {
+            ExynosDeviceModule* device = (ExynosDeviceModule*)mDevice;
+            return device->getDisplayColorInterface();
+        }
 
         std::map<std::string, atc_mode> mAtcModeSetting;
         bool mAtcInit;
