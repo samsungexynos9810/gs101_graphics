@@ -41,7 +41,6 @@ uint32_t ExynosMPPModule::getSrcXOffsetAlign(struct exynos_image &src)
     return mSrcSizeRestrictions[idx].cropXAlign;
 }
 
-#if 0
 int32_t ExynosMPPModule::setColorConversionInfo()
 {
     if (mAssignedDisplay == nullptr) {
@@ -85,4 +84,3 @@ int32_t ExynosMPPModule::setColorConversionInfo()
     }
     return NO_ERROR;
 }
-#endif
