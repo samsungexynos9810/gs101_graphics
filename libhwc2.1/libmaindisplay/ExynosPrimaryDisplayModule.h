@@ -290,6 +290,10 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
             return device->getDisplayColorInterface();
         }
 
+        bool isForceColorUpdate() const { return mForceColorUpdate; }
+        void setForceColorUpdate(bool force) { mForceColorUpdate = force; }
+        bool isDisplaySwitched(int32_t mode, int32_t prevMode);
+
         std::map<std::string, atc_mode> mAtcModeSetting;
         bool mAtcInit;
         LbeState mCurrentLbeState = LbeState::OFF;
@@ -306,6 +310,10 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         uint32_t mAtcStDownStep;
         Mutex mAtcStMutex;
         bool mPendingAtcOff;
+        bool mForceColorUpdate = false;
+
+    protected:
+        virtual int32_t setPowerMode(int32_t mode) override;
 };
 
 }  // namespace gs101

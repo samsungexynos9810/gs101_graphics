@@ -32,12 +32,15 @@ class ExynosDeviceModule : public ExynosDevice {
         virtual ~ExynosDeviceModule();
 
         IDisplayColorGS101* getDisplayColorInterface() { return mDisplayColorInterface; }
+        void setActiveDisplay(uint32_t index) { mActiveDisplay = index; }
+        uint32_t getActiveDisplay() const { return mActiveDisplay; }
 
     private:
         int initDisplayColor(const std::vector<displaycolor::DisplayInfo>& display_info);
 
         IDisplayColorGS101* mDisplayColorInterface;
         DisplayColorLoader mDisplayColorLoader;
+        uint32_t mActiveDisplay;
 };
 
 }  // namespace gs101

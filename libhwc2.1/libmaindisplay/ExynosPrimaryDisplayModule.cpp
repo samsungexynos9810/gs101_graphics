@@ -373,8 +373,10 @@ int ExynosPrimaryDisplayModule::deliverWinConfigData()
     IDisplayColorGS101* displayColorInterface = getDisplayColorInterface();
 
     bool forceDisplayColorSetting = false;
-    if (!mDisplaySceneInfo.displaySettingDelivered)
+    if (!mDisplaySceneInfo.displaySettingDelivered || isForceColorUpdate())
         forceDisplayColorSetting = true;
+
+    setForceColorUpdate(false);
 
     if (displayColorInterface != nullptr) {
         moduleDisplayInterface->setColorSettingChanged(
@@ -1072,4 +1074,26 @@ void ExynosPrimaryDisplayModule::checkAtcAnimation() {
     }
 
     mDevice->invalidate();
+}
+
+int32_t ExynosPrimaryDisplayModule::setPowerMode(int32_t mode) {
+    hwc2_power_mode_t prevPowerModeState = mPowerModeState;
+    int32_t ret;
+
+    ret = ExynosPrimaryDisplay::setPowerMode(mode);
+
+    if ((ret == HWC2_ERROR_NONE) && isDisplaySwitched(mode, prevPowerModeState)) {
+        ExynosDeviceModule* device = static_cast<ExynosDeviceModule*>(mDevice);
+
+        device->setActiveDisplay(mIndex);
+        setForceColorUpdate(true);
+    }
+    return ret;
+}
+
+bool ExynosPrimaryDisplayModule::isDisplaySwitched(int32_t mode, int32_t prevMode) {
+    ExynosDeviceModule* device = static_cast<ExynosDeviceModule*>(mDevice);
+
+    return (device->getActiveDisplay() != mIndex) && (prevMode == HWC_POWER_MODE_OFF) &&
+            (mode != HWC_POWER_MODE_OFF);
 }
