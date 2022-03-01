@@ -119,7 +119,9 @@ class ExynosPrimaryDisplayModule : public ExynosPrimaryDisplay {
         virtual bool checkRrCompensationEnabled() {
             const DisplayType display = getDisplayTypeFromIndex(mIndex);
             IDisplayColorGS101* displayColorInterface = getDisplayColorInterface();
-            return displayColorInterface->IsRrCompensationEnabled(display);
+            return displayColorInterface
+                ? displayColorInterface->IsRrCompensationEnabled(display)
+                : false;
         }
 
         virtual bool isColorCalibratedByDevice();
