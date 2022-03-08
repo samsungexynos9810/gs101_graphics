@@ -19,6 +19,8 @@
 #include "ExynosResourceManager.h"
 #include "ExynosPrimaryDisplayModule.h"
 
+using namespace gs101;
+
 ExynosMPPModule::ExynosMPPModule(ExynosResourceManager* resourceManager,
         uint32_t physicalType, uint32_t logicalType, const char *name,
         uint32_t physicalIndex, uint32_t logicalIndex, uint32_t preAssignInfo)
@@ -50,6 +52,10 @@ int32_t ExynosMPPModule::setColorConversionInfo()
 
     ExynosPrimaryDisplayModule* primaryDisplay =
         (ExynosPrimaryDisplayModule*)mAssignedDisplay;
+
+    if (!primaryDisplay->hasDisplayColor()) {
+        return NO_ERROR;
+    }
 
     for (size_t i = 0; i < mAssignedSources.size(); i++) {
         auto mppSource = mAssignedSources[i];

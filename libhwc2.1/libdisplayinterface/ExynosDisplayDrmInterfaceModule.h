@@ -21,6 +21,8 @@
 
 #include "ExynosDisplayDrmInterface.h"
 
+namespace gs101 {
+
 using namespace displaycolor;
 
 class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
@@ -64,7 +66,10 @@ class ExynosDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface {
                 uint32_t &blobId);
         int32_t createOetfBlobFromIDpp(const IDisplayColorGS101::IDpp &dpp,
                 uint32_t &blobId);
-    private:
+
+        void getDisplayInfo(std::vector<displaycolor::DisplayInfo> &display_info);
+
+    protected:
         class SaveBlob {
             public:
                 ~SaveBlob();
@@ -154,4 +159,7 @@ class ExynosExternalDisplayDrmInterfaceModule : public ExynosDisplayDrmInterface
         ExynosExternalDisplayDrmInterfaceModule(ExynosDisplay *exynosDisplay);
         virtual ~ExynosExternalDisplayDrmInterfaceModule();
 };
+
+}  // namespace gs101
+
 #endif
