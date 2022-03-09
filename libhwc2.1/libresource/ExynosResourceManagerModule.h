@@ -18,10 +18,14 @@
 
 #include "ExynosResourceManager.h"
 
+namespace gs101 {
+
 class ExynosResourceManagerModule : public ExynosResourceManager {
     public:
         ExynosResourceManagerModule(ExynosDevice* device);
         ~ExynosResourceManagerModule();
 };
+
+}  // namespace gs101
 
 #endif // _EXYNOS_RESOURCE_MANAGER_MODULE_H
