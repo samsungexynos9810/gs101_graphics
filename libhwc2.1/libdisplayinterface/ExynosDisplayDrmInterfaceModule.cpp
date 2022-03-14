@@ -41,6 +41,8 @@ int32_t convertDqeMatrixDataToMatrix(T &colorMatrix, M &mat,
     return NO_ERROR;
 }
 
+using namespace gs101;
+
 /////////////////////////////////////////////////// ExynosDisplayDrmInterfaceModule //////////////////////////////////////////////////////////////////
 ExynosDisplayDrmInterfaceModule::ExynosDisplayDrmInterfaceModule(ExynosDisplay *exynosDisplay)
 : ExynosDisplayDrmInterface(exynosDisplay)
@@ -76,15 +78,6 @@ int32_t ExynosDisplayDrmInterfaceModule::initDrmDevice(DrmDevice *drmDevice)
         return ret;
 
     mOldDqeBlobs.init(drmDevice);
-
-    ExynosPrimaryDisplayModule* display =
-        (ExynosPrimaryDisplayModule*)mExynosDisplay;
-
-    ret = display->initDisplayColor();
-    if (ret != NO_ERROR) {
-        HWC_LOGE(mExynosDisplay, "Failed to load displaycolor %d", ret);
-        return ret;
-    }
 
     initOldDppBlobs(drmDevice);
     if (mDrmCrtc->force_bpc_property().id())
@@ -491,7 +484,8 @@ int32_t ExynosDisplayDrmInterfaceModule::setDisplayColorSetting(
     int ret = NO_ERROR;
     const IDisplayColorGS101::IDqe &dqe = display->getDqe();
 
-    if ((ret = setDisplayColorBlob(mDrmCrtc->cgc_lut_property(),
+    if ((mDrmCrtc->cgc_lut_property().id() != 0) &&
+        (ret = setDisplayColorBlob(mDrmCrtc->cgc_lut_property(),
                 static_cast<uint32_t>(DqeBlobs::CGC),
                 dqe.Cgc(), dqe, drmReq) != NO_ERROR)) {
         HWC_LOGE(mExynosDisplay, "%s: set Cgc blob fail", __func__);
@@ -747,6 +741,24 @@ uint32_t ExynosDisplayDrmInterfaceModule::SaveBlob::getBlob(uint32_t type)
         return 0;
     }
     return blobs[type];
+}
+
+void ExynosDisplayDrmInterfaceModule::getDisplayInfo(
+        std::vector<displaycolor::DisplayInfo> &display_info) {
+    displaycolor::DisplayInfo primary_display;
+    auto &tb = primary_display.brightness_table;
+
+    tb.nbm_nits_min = mBrightnessTable[BrightnessRange::NORMAL].mNitsStart;
+    tb.nbm_nits_max = mBrightnessTable[BrightnessRange::NORMAL].mNitsEnd;
+    tb.nbm_dbv_min = mBrightnessTable[BrightnessRange::NORMAL].mBklStart;
+    tb.nbm_dbv_max = mBrightnessTable[BrightnessRange::NORMAL].mBklEnd;
+
+    tb.hbm_nits_min = mBrightnessTable[BrightnessRange::HBM].mNitsStart;
+    tb.hbm_nits_max = mBrightnessTable[BrightnessRange::HBM].mNitsEnd;
+    tb.hbm_dbv_min = mBrightnessTable[BrightnessRange::HBM].mBklStart;
+    tb.hbm_dbv_max = mBrightnessTable[BrightnessRange::HBM].mBklEnd;
+
+    display_info.push_back(primary_display);
 }
 
 //////////////////////////////////////////////////// ExynosPrimaryDisplayDrmInterfaceModule //////////////////////////////////////////////////////////////////
