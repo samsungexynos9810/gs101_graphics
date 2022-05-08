@@ -17,13 +17,32 @@
 #ifndef EXYNOS_DEVICE_MODULE_H
 #define EXYNOS_DEVICE_MODULE_H
 
+#include <gs101/displaycolor/displaycolor_gs101.h>
+
+#include "DisplayColorLoader.h"
 #include "ExynosDevice.h"
+
+using namespace displaycolor;
+
+namespace gs101 {
 
 class ExynosDeviceModule : public ExynosDevice {
     public:
         ExynosDeviceModule();
         virtual ~ExynosDeviceModule();
 
+        IDisplayColorGS101* getDisplayColorInterface() { return mDisplayColorInterface; }
+        void setActiveDisplay(uint32_t index) { mActiveDisplay = index; }
+        uint32_t getActiveDisplay() const { return mActiveDisplay; }
+
+    private:
+        int initDisplayColor(const std::vector<displaycolor::DisplayInfo>& display_info);
+
+        IDisplayColorGS101* mDisplayColorInterface;
+        DisplayColorLoader mDisplayColorLoader;
+        uint32_t mActiveDisplay;
 };
+
+}  // namespace gs101
 
 #endif
